@@ -113,6 +113,7 @@ jobs:
   create-release:
     needs: [build-and-publish, publish-binaries]
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
     - uses: actions/checkout@v4
