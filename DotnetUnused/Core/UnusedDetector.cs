@@ -1,0 +1,216 @@
+using System.Collections.Concurrent;
+using Microsoft.CodeAnalysis;
+using DotnetUnused.Models;
+
+namespace DotnetUnused.Core;
+
+/// <summary>
+/// Computes unused symbols by subtracting referenced from declared
+/// Applies heuristics to avoid false positives
+/// </summary>
+public sealed class UnusedDetector
+{
+    private readonly bool _excludePublicApi;
+
+    public UnusedDetector(bool excludePublicApi = true)
+    {
+        _excludePublicApi = excludePublicApi;
+    }
+
+    /// <summary>
+    /// Computes unused symbols: Declared - Referenced
+    /// </summary>
+    public AnalysisResult DetectUnused(
+        ConcurrentBag<SymbolDefinition> declaredSymbols,
+        ConcurrentBag<ISymbol> referencedSymbols,
+        IProgress<string>? progress = null)
+    {
+        progress?.Report("Computing unused symbols...");
+
+        var result = new AnalysisResult
+        {
+            TotalSymbolsAnalyzed = declaredSymbols.Count,
+            TotalReferencesFound = referencedSymbols.Count
+        };
+
+        // Create a HashSet of referenced symbols for fast lookup
+        var referencedSet = new HashSet<ISymbol>(referencedSymbols, SymbolEqualityComparer.Default);
+
+        // Find symbols that are declared but not referenced
+        foreach (var declared in declaredSymbols)
+        {
+            if (!referencedSet.Contains(declared.Symbol))
+            {
+                // Apply heuristics to avoid false positives
+                if (ShouldReportAsUnused(declared.Symbol))
+                {
+                    result.AddUnusedSymbol(declared);
+                }
+            }
+        }
+
+        progress?.Report($"Found {result.UnusedSymbols.Count} unused symbols");
+        return result;
+    }
+
+    /// <summary>
+    /// Applies heuristics to determine if a symbol should be reported as unused
+    /// </summary>
+    private bool ShouldReportAsUnused(ISymbol symbol)
+    {
+        // Entry points - never report as unused
+        if (IsEntryPoint(symbol))
+        {
+            return false;
+        }
+
+        // Public API - configurable
+        if (_excludePublicApi && symbol.DeclaredAccessibility == Accessibility.Public)
+        {
+            return false;
+        }
+
+        // Test methods - never report as unused
+        if (IsTestMethod(symbol))
+        {
+            return false;
+        }
+
+        // ASP.NET Core endpoints/controllers - never report as unused
+        if (IsAspNetCoreEndpoint(symbol))
+        {
+            return false;
+        }
+
+        // Serialization members - never report as unused
+        if (IsSerializationMember(symbol))
+        {
+            return false;
+        }
+
+        // Explicitly marked as used - never report as unused
+        if (HasUsedImplicitlyAttribute(symbol))
+        {
+            return false;
+        }
+
+        // Constructors used by DI - be conservative
+        if (IsConstructor(symbol))
+        {
+            // Only report private constructors as unused
+            return symbol.DeclaredAccessibility == Accessibility.Private;
+        }
+
+        return true;
+    }
+
+    private static bool IsEntryPoint(ISymbol symbol)
+    {
+        // Check for Main method
+        if (symbol is IMethodSymbol method)
+        {
+            return method.Name == "Main" && method.IsStatic;
+        }
+
+        return false;
+    }
+
+    private static bool IsTestMethod(ISymbol symbol)
+    {
+        if (symbol is not IMethodSymbol method)
+        {
+            return false;
+        }
+
+        // Check for common test framework attributes
+        var attributes = method.GetAttributes();
+        foreach (var attr in attributes)
+        {
+            var attrName = attr.AttributeClass?.Name;
+            if (attrName is "FactAttribute" or "TestAttribute" or
+                "TestMethodAttribute" or "TheoryAttribute" or "TestCaseAttribute")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsAspNetCoreEndpoint(ISymbol symbol)
+    {
+        // Check if the containing type is a controller
+        var containingType = symbol.ContainingType;
+        if (containingType != null)
+        {
+            // Check if it inherits from ControllerBase or Controller
+            var baseType = containingType.BaseType;
+            while (baseType != null)
+            {
+                if (baseType.Name == "ControllerBase" || baseType.Name == "Controller")
+                {
+                    return true;
+                }
+                baseType = baseType.BaseType;
+            }
+        }
+
+        // Check for endpoint attributes (Minimal API, Web API)
+        if (symbol is IMethodSymbol method)
+        {
+            var attributes = method.GetAttributes();
+            foreach (var attr in attributes)
+            {
+                var attrName = attr.AttributeClass?.Name;
+                if (attrName is "HttpGetAttribute" or "HttpPostAttribute" or
+                    "HttpPutAttribute" or "HttpDeleteAttribute" or
+                    "HttpPatchAttribute" or "RouteAttribute")
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsSerializationMember(ISymbol symbol)
+    {
+        // Check for properties/fields used in serialization
+        if (symbol is IPropertySymbol or IFieldSymbol)
+        {
+            var attributes = symbol.GetAttributes();
+            foreach (var attr in attributes)
+            {
+                var attrName = attr.AttributeClass?.Name;
+                if (attrName is "JsonPropertyNameAttribute" or "JsonPropertyAttribute" or
+                    "DataMemberAttribute" or "XmlElementAttribute")
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasUsedImplicitlyAttribute(ISymbol symbol)
+    {
+        var attributes = symbol.GetAttributes();
+        foreach (var attr in attributes)
+        {
+            var attrName = attr.AttributeClass?.Name;
+            if (attrName is "UsedImplicitlyAttribute" or "PreserveAttribute")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsConstructor(ISymbol symbol)
+    {
+        return symbol is IMethodSymbol method && method.MethodKind == MethodKind.Constructor;
+    }
+}
