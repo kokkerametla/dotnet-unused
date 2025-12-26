@@ -73,12 +73,18 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
-    - name: Extract version from tag
+    - name: Extract version from tag or input
       id: version
       shell: bash
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        fi
 
     - name: Publish standalone
+      shell: bash
       run: |
         dotnet publish DotnetUnused/DotnetUnused.csproj \
           -c Release \
