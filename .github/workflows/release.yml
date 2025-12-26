@@ -86,13 +86,7 @@ jobs:
     - name: Publish standalone
       shell: bash
       run: |
-        dotnet publish DotnetUnused/DotnetUnused.csproj \
-          -c Release \
-          -r ${{ matrix.runtime }} \
-          --self-contained true \
-          /p:PublishSingleFile=true \
-          /p:Version=${{ steps.version.outputs.VERSION }} \
-          -o ./publish/${{ matrix.runtime }}
+        dotnet publish DotnetUnused/DotnetUnused.csproj -c Release -r ${{ matrix.runtime }} --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.VERSION }} -o ./publish/${{ matrix.runtime }}
 
     - name: Create archive (Windows)
       if: matrix.runtime == 'win-x64'
