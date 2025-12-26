@@ -14,14 +14,34 @@ A high-performance CLI tool for detecting unused code in .NET solutions and proj
 
 ## Installation
 
-### Build from Source
+### Option 1: Install as .NET Global Tool (Recommended)
+
+```bash
+dotnet tool install --global DotnetUnused
+```
+
+After installation, the `dotnet-unused` command will be available globally.
+
+Update to the latest version:
+```bash
+dotnet tool update --global DotnetUnused
+```
+
+### Option 2: Download Standalone Binary
+
+Download pre-built binaries from [GitHub Releases](https://github.com/kokkerametla/dotnet-unused/releases) (no .NET runtime required):
+- Windows: `dotnet-unused-{version}-win-x64.zip`
+- Linux: `dotnet-unused-{version}-linux-x64.tar.gz`
+- macOS: `dotnet-unused-{version}-osx-x64.tar.gz` or `osx-arm64.tar.gz`
+
+### Option 3: Build from Source
 
 ```bash
 cd DotnetUnused
 dotnet build -c Release
 ```
 
-### Create Self-Contained Executable
+### Option 4: Build Self-Contained Executable
 
 ```bash
 # Windows
@@ -44,13 +64,14 @@ The executable will be in `bin/Release/net8.0/{runtime}/publish/`
 ### Basic Usage
 
 ```bash
-dotnet run --project DotnetUnused -- path/to/MySolution.sln
-```
+# If installed as global tool
+dotnet-unused path/to/MySolution.sln
 
-Or using the built executable:
-
-```bash
+# Or using the executable directly
 DotnetUnused MySolution.sln
+
+# Or from source
+dotnet run --project DotnetUnused -- path/to/MySolution.sln
 ```
 
 ### Options
@@ -64,19 +85,19 @@ DotnetUnused MySolution.sln
 
 ```bash
 # Analyze a .NET solution with console output
-DotnetUnused MySolution.sln
+dotnet-unused MySolution.sln
 
 # Analyze a .NET Framework solution
-DotnetUnused LegacySolution.sln
+dotnet-unused LegacySolution.sln
 
 # Generate JSON report
-DotnetUnused MySolution.sln --format json --output report.json
+dotnet-unused MySolution.sln --format json --output report.json
 
 # Include public members in analysis
-DotnetUnused MySolution.sln --exclude-public false
+dotnet-unused MySolution.sln --exclude-public false
 
 # Analyze a single project
-DotnetUnused MyProject.csproj
+dotnet-unused MyProject.csproj
 ```
 
 ## How It Works

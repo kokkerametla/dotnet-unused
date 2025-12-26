@@ -5,7 +5,33 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- dotnet tool configuration -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>dotnet-unused</ToolCommandName>
+    <PackageId>DotnetUnused</PackageId>
+
+    <!-- Versioning -->
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+
+    <!-- Package metadata -->
+    <Authors>kokkerametla</Authors>
+    <Company>kokkerametla</Company>
+    <Description>High-performance CLI tool for detecting unused code in .NET solutions using Roslyn static analysis. Supports .NET Core, .NET 5+, and .NET Framework projects.</Description>
+    <PackageTags>roslyn;static-analysis;unused-code;code-cleanup;refactoring;dotnet-tool</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/kokkerametla/dotnet-unused</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/kokkerametla/dotnet-unused</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Initial release with support for detecting unused methods, properties, and fields.</PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2" />

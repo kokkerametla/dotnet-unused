@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Restore dependencies
+      run: dotnet restore DotnetUnused/DotnetUnused.csproj
+
+    - name: Build
+      run: dotnet build DotnetUnused/DotnetUnused.csproj -c Release --no-restore
+
+    - name: Pack as dotnet tool
+      run: dotnet pack DotnetUnused/DotnetUnused.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.VERSION }}
+
+    - name: Publish to NuGet.org
+      run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
+      continue-on-error: true
+
+    - name: Upload NuGet package as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-package
+        path: ./artifacts/*.nupkg
+
+  publish-binaries:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            runtime: win-x64
+          - os: ubuntu-latest
+            runtime: linux-x64
+          - os: macos-latest
+            runtime: osx-x64
+          - os: macos-latest
+            runtime: osx-arm64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Extract version from tag
+      id: version
+      shell: bash
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Publish standalone
+      run: |
+        dotnet publish DotnetUnused/DotnetUnused.csproj \
+          -c Release \
+          -r ${{ matrix.runtime }} \
+          --self-contained true \
+          /p:PublishSingleFile=true \
+          /p:Version=${{ steps.version.outputs.VERSION }} \
+          -o ./publish/${{ matrix.runtime }}
+
+    - name: Create archive (Windows)
+      if: matrix.runtime == 'win-x64'
+      shell: pwsh
+      run: |
+        Compress-Archive -Path ./publish/${{ matrix.runtime }}/DotnetUnused.exe -DestinationPath ./dotnet-unused-${{ steps.version.outputs.VERSION }}-${{ matrix.runtime }}.zip
+
+    - name: Create archive (Unix)
+      if: matrix.runtime != 'win-x64'
+      run: |
+        cd ./publish/${{ matrix.runtime }}
+        chmod +x DotnetUnused
+        tar -czf ../../dotnet-unused-${{ steps.version.outputs.VERSION }}-${{ matrix.runtime }}.tar.gz DotnetUnused
+        cd ../..
+
+    - name: Upload binary artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: binary-${{ matrix.runtime }}
+        path: |
+          ./dotnet-unused-*.zip
+          ./dotnet-unused-*.tar.gz
+
+  create-release:
+    needs: [build-and-publish, publish-binaries]
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Extract version from tag
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Release ${{ steps.version.outputs.VERSION }}
+        body: |
+          ## Dotnet Unused v${{ steps.version.outputs.VERSION }}
+
+          High-performance CLI tool for detecting unused code in .NET solutions.
+
+          ### Installation
+
+          **As a .NET Global Tool** (recommended):
+          ```bash
+          dotnet tool install --global DotnetUnused
+          ```
+
+          **Or download standalone binaries** (no .NET required):
+          - Windows: `dotnet-unused-${{ steps.version.outputs.VERSION }}-win-x64.zip`
+          - Linux: `dotnet-unused-${{ steps.version.outputs.VERSION }}-linux-x64.tar.gz`
+          - macOS Intel: `dotnet-unused-${{ steps.version.outputs.VERSION }}-osx-x64.tar.gz`
+          - macOS Apple Silicon: `dotnet-unused-${{ steps.version.outputs.VERSION }}-osx-arm64.tar.gz`
+
+          ### What's New
+          See [CHANGELOG.md](CHANGELOG.md) for details.
+        files: |
+          binary-*/*
+          nuget-package/*
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
