@@ -74,3 +74,9 @@ ScaffoldingReadMe.txt
 
 # Output files
 unused-code-report.json
+
+# VS Code Extension
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/*.vsix
+vscode-extension/.vscode-test/
