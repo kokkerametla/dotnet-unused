@@ -139,6 +139,35 @@ async function analyzeCurrentFile() {
 }
 
 async function runAnalysis(targetPath: string, scope: 'workspace' | 'file') {
+    const config = vscode.workspace.getConfiguration('dotnet-unused');
+    const useTerminal = config.get<boolean>('useTerminal', true);
+
+    if (useTerminal) {
+        await runAnalysisInTerminal(targetPath, scope);
+    } else {
+        await runAnalysisInOutputWindow(targetPath, scope);
+    }
+}
+
+async function runAnalysisInTerminal(targetPath: string, scope: 'workspace' | 'file') {
+    const config = vscode.workspace.getConfiguration('dotnet-unused');
+    const cliPath = config.get<string>('cliPath') || 'dotnet-unused';
+    const excludePublic = config.get<boolean>('excludePublic', true);
+
+    const terminal = vscode.window.createTerminal({
+        name: 'Dotnet Unused Analysis',
+        iconPath: new vscode.ThemeIcon('search')
+    });
+
+    terminal.show();
+
+    const command = `${cliPath} "${targetPath}" --exclude-public ${excludePublic}`;
+    terminal.sendText(command);
+
+    vscode.window.showInformationMessage(`Running analysis in terminal...`);
+}
+
+async function runAnalysisInOutputWindow(targetPath: string, scope: 'workspace' | 'file') {
     outputChannel.show();
     outputChannel.appendLine(`\n=== Starting ${scope} analysis ===`);
     outputChannel.appendLine(`Target: ${targetPath}\n`);

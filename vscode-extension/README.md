@@ -51,6 +51,7 @@ Configure the extension in VS Code settings:
 - `dotnet-unused.cliPath`: Path to dotnet-unused CLI tool (leave empty for global installation)
 - `dotnet-unused.excludePublic`: Exclude public members from detection (default: `true`)
 - `dotnet-unused.diagnosticSeverity`: Severity level for diagnostics (`Error`, `Warning`, `Information`, `Hint`)
+- `dotnet-unused.useTerminal`: Show output in integrated terminal instead of output window (default: `true`)
 - `dotnet-unused.autoRunOnSave`: Automatically analyze when C# files are saved (default: `false`)
 
 ## How It Works

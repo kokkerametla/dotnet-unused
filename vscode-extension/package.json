@@ -4,6 +4,11 @@
   "description": "Detect and highlight unused code in .NET solutions using Roslyn static analysis",
   "version": "0.1.0",
   "publisher": "kokkerametla",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -75,6 +80,11 @@
           "type": "boolean",
           "default": false,
           "description": "Automatically run analysis when C# files are saved"
+        },
+        "dotnet-unused.useTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show analysis output in integrated terminal instead of output window"
         }
       }
     },
@@ -119,9 +129,9 @@
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8.56.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.3.3"
   },
-  "dependencies": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/kokkerametla/dotnet-unused.git"
