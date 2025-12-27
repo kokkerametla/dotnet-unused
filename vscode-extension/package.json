@@ -93,7 +93,7 @@
         {
           "id": "dotnet-unused-explorer",
           "title": "Dotnet Unused",
-          "icon": "resources/icon.svg"
+          "icon": "icon.png"
         }
       ]
     },
