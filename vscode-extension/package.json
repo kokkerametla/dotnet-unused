@@ -1,0 +1,140 @@
+{
+  "name": "dotnet-unused-vscode",
+  "displayName": "Dotnet Unused Code Analyzer",
+  "description": "Detect and highlight unused code in .NET solutions using Roslyn static analysis",
+  "version": "0.1.0",
+  "publisher": "kokkerametla",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "dotnet",
+    "csharp",
+    "roslyn",
+    "unused-code",
+    "refactoring"
+  ],
+  "activationEvents": [
+    "onLanguage:csharp",
+    "workspaceContains:**/*.sln",
+    "workspaceContains:**/*.csproj"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "dotnet-unused.analyzeWorkspace",
+        "title": "Analyze Workspace for Unused Code",
+        "category": "Dotnet Unused"
+      },
+      {
+        "command": "dotnet-unused.analyzeCurrentFile",
+        "title": "Analyze Current File for Unused Code",
+        "category": "Dotnet Unused"
+      },
+      {
+        "command": "dotnet-unused.clearDiagnostics",
+        "title": "Clear Unused Code Diagnostics",
+        "category": "Dotnet Unused"
+      },
+      {
+        "command": "dotnet-unused.exportReport",
+        "title": "Export Unused Code Report (JSON)",
+        "category": "Dotnet Unused"
+      }
+    ],
+    "configuration": {
+      "title": "Dotnet Unused",
+      "properties": {
+        "dotnet-unused.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to dotnet-unused CLI tool. Leave empty to use global installation."
+        },
+        "dotnet-unused.excludePublic": {
+          "type": "boolean",
+          "default": true,
+          "description": "Exclude public members from detection"
+        },
+        "dotnet-unused.diagnosticSeverity": {
+          "type": "string",
+          "enum": [
+            "Error",
+            "Warning",
+            "Information",
+            "Hint"
+          ],
+          "default": "Warning",
+          "description": "Severity level for unused code diagnostics"
+        },
+        "dotnet-unused.autoRunOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically run analysis when C# files are saved"
+        },
+        "dotnet-unused.useTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show analysis output in integrated terminal instead of output window"
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "dotnet-unused-explorer",
+          "title": "Dotnet Unused",
+          "icon": "icon.png"
+        }
+      ]
+    },
+    "views": {
+      "dotnet-unused-explorer": [
+        {
+          "id": "dotnet-unused.unusedSymbols",
+          "name": "Unused Symbols"
+        }
+      ]
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "dotnet-unused.analyzeWorkspace",
+          "when": "resourceExtname == .sln || resourceExtname == .csproj",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "sharp": "^0.34.5",
+    "typescript": "^5.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kokkerametla/dotnet-unused.git"
+  },
+  "license": "MIT"
+}
