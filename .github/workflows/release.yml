@@ -5,11 +5,6 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., 1.0.0)'
-        required: true
-        default: '1.0.0'
 
 jobs:
   build-and-publish:
@@ -17,20 +12,30 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for GitVersion
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
+
+    - name: Display GitVersion outputs
+      run: |
+        echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
+        echo "NuGetVersion: ${{ steps.gitversion.outputs.nuGetVersion }}"
+        echo "AssemblySemVer: ${{ steps.gitversion.outputs.assemblySemVer }}"
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
-
-    - name: Extract version from tag or input
-      id: version
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-        fi
 
     - name: Restore dependencies
       run: dotnet restore DotnetUnused/DotnetUnused.csproj
@@ -39,7 +44,7 @@ jobs:
       run: dotnet build DotnetUnused/DotnetUnused.csproj -c Release --no-restore
 
     - name: Pack as dotnet tool
-      run: dotnet pack DotnetUnused/DotnetUnused.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.version.outputs.VERSION }}
+      run: dotnet pack DotnetUnused/DotnetUnused.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.gitversion.outputs.nuGetVersion }}
 
     - name: Publish to NuGet.org
       run: dotnet nuget push ./artifacts/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
@@ -67,39 +72,42 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for GitVersion
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
-    - name: Extract version from tag or input
-      id: version
-      shell: bash
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-        fi
-
     - name: Publish standalone
       shell: bash
       run: |
-        dotnet publish DotnetUnused/DotnetUnused.csproj -c Release -r ${{ matrix.runtime }} --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.VERSION }} -o ./publish/${{ matrix.runtime }}
+        dotnet publish DotnetUnused/DotnetUnused.csproj -c Release -r ${{ matrix.runtime }} --self-contained true -p:PublishSingleFile=true -p:Version=${{ steps.gitversion.outputs.nuGetVersion }} -o ./publish/${{ matrix.runtime }}
 
     - name: Create archive (Windows)
       if: matrix.runtime == 'win-x64'
       shell: pwsh
       run: |
-        Compress-Archive -Path ./publish/${{ matrix.runtime }}/DotnetUnused.exe -DestinationPath ./dotnet-unused-${{ steps.version.outputs.VERSION }}-${{ matrix.runtime }}.zip
+        Compress-Archive -Path ./publish/${{ matrix.runtime }}/DotnetUnused.exe -DestinationPath ./dotnet-unused-${{ steps.gitversion.outputs.semVer }}-${{ matrix.runtime }}.zip
 
     - name: Create archive (Unix)
       if: matrix.runtime != 'win-x64'
       run: |
         cd ./publish/${{ matrix.runtime }}
         chmod +x DotnetUnused
-        tar -czf ../../dotnet-unused-${{ steps.version.outputs.VERSION }}-${{ matrix.runtime }}.tar.gz DotnetUnused
+        tar -czf ../../dotnet-unused-${{ steps.gitversion.outputs.semVer }}-${{ matrix.runtime }}.tar.gz DotnetUnused
         cd ../..
 
     - name: Upload binary artifact
@@ -111,32 +119,36 @@ jobs:
           ./dotnet-unused-*.tar.gz
 
   create-release:
-    needs: [build-and-publish, publish-binaries]
+    needs: [build-and-publish, publish-binaries, publish-vscode-extension]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for GitVersion
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
 
     - name: Download all artifacts
       uses: actions/download-artifact@v4
 
-    - name: Extract version from tag or input
-      id: version
-      run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-        fi
-
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.version.outputs.VERSION) || github.ref_name }}
-        name: Release ${{ steps.version.outputs.VERSION }}
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.gitversion.outputs.semVer) || github.ref_name }}
+        name: Release ${{ steps.gitversion.outputs.semVer }}
         body: |
-          ## Dotnet Unused v${{ steps.version.outputs.VERSION }}
+          ## Dotnet Unused v${{ steps.gitversion.outputs.semVer }}
 
           High-performance CLI tool for detecting unused code in .NET solutions.
 
@@ -148,17 +160,86 @@ jobs:
           ```
 
           **Or download standalone binaries** (no .NET required):
-          - Windows: `dotnet-unused-${{ steps.version.outputs.VERSION }}-win-x64.zip`
-          - Linux: `dotnet-unused-${{ steps.version.outputs.VERSION }}-linux-x64.tar.gz`
-          - macOS Intel: `dotnet-unused-${{ steps.version.outputs.VERSION }}-osx-x64.tar.gz`
-          - macOS Apple Silicon: `dotnet-unused-${{ steps.version.outputs.VERSION }}-osx-arm64.tar.gz`
+          - Windows: `dotnet-unused-${{ steps.gitversion.outputs.semVer }}-win-x64.zip`
+          - Linux: `dotnet-unused-${{ steps.gitversion.outputs.semVer }}-linux-x64.tar.gz`
+          - macOS Intel: `dotnet-unused-${{ steps.gitversion.outputs.semVer }}-osx-x64.tar.gz`
+          - macOS Apple Silicon: `dotnet-unused-${{ steps.gitversion.outputs.semVer }}-osx-arm64.tar.gz`
+
+          ### VS Code Extension
+
+          **Install from Marketplace**:
+          Search for "Dotnet Unused" in VS Code Extensions or visit the [marketplace page](https://marketplace.visualstudio.com/items?itemName=kokkerametla.dotnet-unused-vscode).
+
+          **Or install from VSIX** (offline installation):
+          Download `dotnet-unused-vscode-${{ steps.gitversion.outputs.semVer }}.vsix` and run:
+          ```bash
+          code --install-extension dotnet-unused-vscode-${{ steps.gitversion.outputs.semVer }}.vsix
+          ```
 
           ### What's New
           See [CHANGELOG.md](CHANGELOG.md) for details.
         files: |
           binary-*/*
           nuget-package/*
+          vscode-extension/*.vsix
         draft: false
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-vscode-extension:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Required for GitVersion
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v1.1.1
+      with:
+        versionSpec: '5.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v1.1.1
+      with:
+        useConfigFile: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      working-directory: ./vscode-extension
+      run: npm install
+
+    - name: Update extension version
+      working-directory: ./vscode-extension
+      run: |
+        npm version ${{ steps.gitversion.outputs.semVer }} --no-git-tag-version
+        echo "Updated extension version to ${{ steps.gitversion.outputs.semVer }}"
+
+    - name: Compile extension
+      working-directory: ./vscode-extension
+      run: npm run compile
+
+    - name: Package extension
+      working-directory: ./vscode-extension
+      run: |
+        npx @vscode/vsce package
+        echo "Created: dotnet-unused-vscode-${{ steps.gitversion.outputs.semVer }}.vsix"
+
+    - name: Upload VSIX as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: vscode-extension
+        path: ./vscode-extension/*.vsix
+
+    - name: Publish to VS Code Marketplace
+      if: github.event_name != 'workflow_dispatch'  # Only publish on tag push
+      working-directory: ./vscode-extension
+      run: npx @vscode/vsce publish --pat ${{ secrets.VSCE_PAT }}
+      continue-on-error: true

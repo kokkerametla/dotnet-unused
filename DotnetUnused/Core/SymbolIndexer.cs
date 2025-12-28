@@ -84,30 +84,7 @@ public sealed class SymbolIndexer
         return declaredSymbols;
     }
 
-    private static bool ShouldAnalyze(string filePath)
-    {
-        if (string.IsNullOrEmpty(filePath))
-        {
-            return false;
-        }
-
-        // Exclude bin/obj directories
-        if (filePath.Contains("\\bin\\") || filePath.Contains("\\obj\\") ||
-            filePath.Contains("/bin/") || filePath.Contains("/obj/"))
-        {
-            return false;
-        }
-
-        // Exclude generated files
-        if (filePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase) ||
-            filePath.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase) ||
-            filePath.EndsWith(".g.i.cs", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return true;
-    }
+    private static bool ShouldAnalyze(string filePath) => FileFilter.ShouldAnalyze(filePath);
 
     /// <summary>
     /// Determines if a symbol should be indexed for analysis

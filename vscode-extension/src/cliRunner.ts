@@ -48,30 +48,46 @@ export class CliRunner {
             });
 
             process.on('close', (code) => {
-                if (code === 0) {
-                    try {
+                try {
+                    if (code === 0) {
                         if (fs.existsSync(tempFile)) {
                             const content = fs.readFileSync(tempFile, 'utf-8');
                             const report: UnusedCodeReport = JSON.parse(content);
-                            fs.unlinkSync(tempFile);
                             resolve(report);
                         } else {
                             this.outputChannel.appendLine('Error: Report file not found');
                             reject(new Error('Report file not found'));
                         }
-                    } catch (error) {
-                        this.outputChannel.appendLine(`Error parsing report: ${error}`);
-                        reject(error);
+                    } else {
+                        this.outputChannel.appendLine(`Process exited with code ${code}`);
+                        this.outputChannel.appendLine(`stderr: ${stderr}`);
+                        reject(new Error(`Analysis failed with code ${code}`));
                     }
-                } else {
-                    this.outputChannel.appendLine(`Process exited with code ${code}`);
-                    this.outputChannel.appendLine(`stderr: ${stderr}`);
-                    reject(new Error(`Analysis failed with code ${code}`));
+                } catch (error) {
+                    this.outputChannel.appendLine(`Error parsing report: ${error}`);
+                    reject(error);
+                } finally {
+                    // Always cleanup temp file
+                    if (fs.existsSync(tempFile)) {
+                        try {
+                            fs.unlinkSync(tempFile);
+                        } catch (cleanupError) {
+                            this.outputChannel.appendLine(`Warning: Failed to cleanup temp file: ${cleanupError}`);
+                        }
+                    }
                 }
             });
 
             process.on('error', (error) => {
                 this.outputChannel.appendLine(`Failed to start process: ${error.message}`);
+                // Cleanup temp file on process error
+                if (fs.existsSync(tempFile)) {
+                    try {
+                        fs.unlinkSync(tempFile);
+                    } catch (cleanupError) {
+                        this.outputChannel.appendLine(`Warning: Failed to cleanup temp file: ${cleanupError}`);
+                    }
+                }
                 reject(error);
             });
         });

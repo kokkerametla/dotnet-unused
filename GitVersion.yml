@@ -1,0 +1,29 @@
+mode: ContinuousDeployment
+branches:
+  master:
+    regex: ^master$
+    mode: ContinuousDeployment
+    tag: ''
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: true
+  feature:
+    regex: ^features?[/-]
+    mode: ContinuousDeployment
+    tag: alpha
+    increment: Patch
+  fix:
+    regex: ^fix[/-]
+    mode: ContinuousDeployment
+    tag: beta
+    increment: Patch
+  pull-request:
+    regex: ^(pull|pull\-requests|pr)[/-]
+    mode: ContinuousDeployment
+    tag: pr
+    increment: Patch
+ignore:
+  sha: []
+merge-message-formats: {}

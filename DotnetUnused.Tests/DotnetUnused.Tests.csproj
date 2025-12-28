@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Disable MSBuild assembly loader checks for test project -->
+    <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Suppress Microsoft.Build.Locator validation errors -->
+    <NoWarn>$(NoWarn);MSBL001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.5.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
+    <!-- Explicit reference to fix Microsoft.Build.Locator validation -->
+    <PackageReference Include="NuGet.Frameworks" Version="6.5.0" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Build.Framework" Version="17.11.31" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DotnetUnused\DotnetUnused.csproj" />
+  </ItemGroup>
+
+  <!-- Work around Microsoft.Build.Locator assembly loading restrictions -->
+  <!-- Copy excluded assemblies manually so they're available at test runtime -->
+  <Target Name="CopyMSBuildAssemblies" AfterTargets="Build">
+    <PropertyGroup>
+      <NuGetFrameworksPath>$(NuGetPackageRoot)nuget.frameworks\6.5.0\lib\netstandard2.0\NuGet.Frameworks.dll</NuGetFrameworksPath>
+    </PropertyGroup>
+    <Copy SourceFiles="$(NuGetFrameworksPath)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" Condition="Exists('$(NuGetFrameworksPath)')" />
+  </Target>
+
+</Project>
