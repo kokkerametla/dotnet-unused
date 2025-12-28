@@ -16,7 +16,8 @@ public sealed class ReferenceWalker
     /// </summary>
     public async Task<ConcurrentBag<ISymbol>> CollectReferencedSymbolsAsync(
         Solution solution,
-        IProgress<string>? progress = null)
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         var referencedSymbols = new ConcurrentBag<ISymbol>();
 
@@ -24,9 +25,9 @@ public sealed class ReferenceWalker
         progress?.Report($"Finding symbol references in {projects.Count} projects...");
 
         // Process projects in parallel
-        await Parallel.ForEachAsync(projects, async (project, cancellationToken) =>
+        await Parallel.ForEachAsync(projects, cancellationToken, async (project, ct) =>
         {
-            var compilation = await project.GetCompilationAsync(cancellationToken);
+            var compilation = await project.GetCompilationAsync(ct);
             if (compilation == null)
             {
                 return;
@@ -42,11 +43,11 @@ public sealed class ReferenceWalker
                     continue;
                 }
 
-                var root = await syntaxTree.GetRootAsync(cancellationToken);
+                var root = await syntaxTree.GetRootAsync(ct);
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
                 // Single-pass traversal of the syntax tree
-                var walker = new SymbolReferenceWalker(semanticModel, referencedSymbols, cancellationToken);
+                var walker = new SymbolReferenceWalker(semanticModel, referencedSymbols, ct);
                 walker.Visit(root);
             }
         });

@@ -15,7 +15,8 @@ public sealed class SymbolIndexer
     /// </summary>
     public async Task<ConcurrentBag<SymbolDefinition>> CollectDeclaredSymbolsAsync(
         Solution solution,
-        IProgress<string>? progress = null)
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         var declaredSymbols = new ConcurrentBag<SymbolDefinition>();
 
@@ -23,9 +24,9 @@ public sealed class SymbolIndexer
         progress?.Report($"Indexing symbols from {projects.Count} projects...");
 
         // Process projects in parallel
-        await Parallel.ForEachAsync(projects, async (project, cancellationToken) =>
+        await Parallel.ForEachAsync(projects, cancellationToken, async (project, ct) =>
         {
-            var compilation = await project.GetCompilationAsync(cancellationToken);
+            var compilation = await project.GetCompilationAsync(ct);
             if (compilation == null)
             {
                 return;
@@ -41,7 +42,7 @@ public sealed class SymbolIndexer
                     continue;
                 }
 
-                var root = await syntaxTree.GetRootAsync(cancellationToken);
+                var root = await syntaxTree.GetRootAsync(ct);
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
                 // Walk the syntax tree and collect declarations

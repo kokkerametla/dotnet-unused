@@ -112,17 +112,17 @@ public class Program
         // Load solution
         cancellationToken.ThrowIfCancellationRequested();
         var loader = new SolutionLoader();
-        var solution = await loader.LoadAsync(path, progress);
+        var solution = await loader.LoadAsync(path, progress, cancellationToken);
 
         // Index declared symbols
         cancellationToken.ThrowIfCancellationRequested();
         var indexer = new SymbolIndexer();
-        var declaredSymbols = await indexer.CollectDeclaredSymbolsAsync(solution, progress);
+        var declaredSymbols = await indexer.CollectDeclaredSymbolsAsync(solution, progress, cancellationToken);
 
         // Find referenced symbols
         cancellationToken.ThrowIfCancellationRequested();
         var walker = new ReferenceWalker();
-        var referencedSymbols = await walker.CollectReferencedSymbolsAsync(solution, progress);
+        var referencedSymbols = await walker.CollectReferencedSymbolsAsync(solution, progress, cancellationToken);
 
         // Detect unused
         cancellationToken.ThrowIfCancellationRequested();

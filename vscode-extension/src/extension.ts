@@ -154,6 +154,8 @@ async function runAnalysisInTerminal(targetPath: string, scope: 'workspace' | 'f
     const cliPath = config.get<string>('cliPath') || 'dotnet-unused';
     const excludePublic = config.get<boolean>('excludePublic', true);
 
+    // Use array for arguments - ShellExecution handles escaping automatically
+    // This safely handles paths with spaces, quotes, and special characters
     const args: string[] = [targetPath];
     if (excludePublic) {
         args.push('--exclude-public', 'true');

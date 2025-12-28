@@ -40,7 +40,7 @@ public sealed class SolutionLoader
     /// <summary>
     /// Loads a solution or project file
     /// </summary>
-    public async Task<Solution> LoadAsync(string path, IProgress<string>? progress = null)
+    public async Task<Solution> LoadAsync(string path, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
         EnsureMSBuildRegistered();
 
