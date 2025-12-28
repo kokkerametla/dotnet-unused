@@ -11,6 +11,20 @@ A high-performance CLI tool for detecting unused code in .NET solutions and proj
 - **Comprehensive**: Detects unused methods, properties, and fields
 - **Broad Compatibility**: Works with both .NET Core/.NET 5+ and .NET Framework projects
 - **Generic Method Support**: Correctly handles generic methods and constructed generic types
+- **Graceful Cancellation**: Ctrl+C support for long-running analysis
+- **Well-Tested**: 85+ unit tests with comprehensive edge case coverage
+
+## VS Code Extension
+
+A [Visual Studio Code extension](./vscode-extension) is available for detecting unused code directly in your editor:
+
+- **Inline Diagnostics**: Squiggly underlines for unused code
+- **Tree View**: Browse unused symbols in sidebar
+- **Terminal Integration**: See CLI output in integrated terminal
+- **On-Demand Analysis**: Run when you need it
+
+**Install from VS Code Marketplace:**
+Search for "Dotnet Unused" in Extensions or visit the [marketplace page](https://marketplace.visualstudio.com/items?itemName=kokkerametla.dotnet-unused-vscode).
 
 ## Installation
 
@@ -226,9 +240,31 @@ The tool automatically excludes:
 - **Conservative Approach**: May miss some unused code to avoid false positives
 - **No Incremental Analysis**: Analyzes the entire solution each time
 
+## Testing
+
+The project includes comprehensive unit tests:
+
+```bash
+cd DotnetUnused.Tests
+dotnet test
+```
+
+**Test Coverage:**
+- 85+ passing unit tests
+- FileFilter utility tests (edge cases, path handling)
+- AnalysisResult model tests
+- Comprehensive edge case validation
+
+See [DotnetUnused.Tests/README.md](./DotnetUnused.Tests/README.md) for details.
+
 ## Contributing
 
 This tool follows the principle: **"Fast, conservative, and trustworthy beats slow and theoretically perfect."**
+
+### Development
+- Run tests: `dotnet test`
+- Build: `dotnet build`
+- Versioning: Uses [GitVersion](./GitVersion.md) for automatic semantic versioning
 
 ## License
 
