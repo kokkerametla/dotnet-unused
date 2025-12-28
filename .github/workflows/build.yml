@@ -47,14 +47,14 @@ jobs:
       run: dotnet build DotnetUnused.Tests/DotnetUnused.Tests.csproj -c Release
 
     - name: Run Unit Tests
-      run: dotnet test DotnetUnused.Tests/DotnetUnused.Tests.csproj -c Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test DotnetUnused.Tests/DotnetUnused.Tests.csproj -c Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --results-directory ./TestResults
 
     - name: Publish Test Results
       uses: dorny/test-reporter@v1
       if: success() || failure()
       with:
         name: CLI Unit Test Results
-        path: '**/test-results.trx'
+        path: 'TestResults/*.trx'
         reporter: dotnet-trx
         fail-on-error: true
 
@@ -63,7 +63,7 @@ jobs:
       if: always()
       with:
         name: test-results-cli
-        path: '**/test-results.trx'
+        path: 'TestResults/*.trx'
 
   build-vscode-extension:
     name: Build VS Code Extension
