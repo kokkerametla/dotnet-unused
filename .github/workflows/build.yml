@@ -106,11 +106,13 @@ jobs:
       run: npm run compile
 
     - name: Package Extension
+      id: package
       working-directory: ./vscode-extension
       run: npx @vscode/vsce package --out test-build.vsix
 
     - name: Upload VSIX
       uses: actions/upload-artifact@v4
+      if: steps.package.outcome == 'success'
       with:
         name: vscode-extension-build
         path: vscode-extension/test-build.vsix
