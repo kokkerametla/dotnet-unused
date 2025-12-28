@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-12-28
+
+### Added
+- GitVersion integration for automatic semantic versioning
+- Unit test infrastructure with xUnit (85 passing tests)
+- FileFilter utility class for shared file filtering logic
+- Ctrl+C cancellation support with graceful shutdown
+- VS Code extension automated release workflow
+- Comprehensive test coverage for FileFilter edge cases
+- AnalysisResult model tests
+- GitVersion documentation (GitVersion.md)
+- VS Code extension publishing documentation (vscode-extension/PUBLISHING.md)
+- Test project documentation (DotnetUnused.Tests/README.md)
+
+### Changed
+- Improved CLI argument parsing with bool.TryParse
+- Refactored SymbolIndexer, ReferenceWalker, and SolutionLoader to use FileFilter
+- Enhanced GitHub Actions workflow with GitVersion
+- Updated VS Code extension to use terminal output by default
+- Synchronized versions between CLI tool and VS Code extension
+
+### Fixed
+- Command injection vulnerability in VS Code extension terminal mode
+- Temp file cleanup in VS Code extension error paths
+- Missing icon reference in VS Code extension
+- FileFilter edge cases (whitespace handling, relative paths, exact pattern matching)
+- Bool.Parse crash on invalid --exclude-public values
+
+### Security
+- Fixed command injection in VS Code extension (replaced string interpolation with ShellExecution)
+- Added proper argument escaping for CLI execution
+
 ## [1.0.0] - 2025-12-26
 
 ### Added

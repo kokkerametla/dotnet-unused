@@ -154,16 +154,25 @@ async function runAnalysisInTerminal(targetPath: string, scope: 'workspace' | 'f
     const cliPath = config.get<string>('cliPath') || 'dotnet-unused';
     const excludePublic = config.get<boolean>('excludePublic', true);
 
-    const terminal = vscode.window.createTerminal({
-        name: 'Dotnet Unused Analysis',
-        iconPath: new vscode.ThemeIcon('search')
-    });
+    // Use array for arguments - ShellExecution handles escaping automatically
+    // This safely handles paths with spaces, quotes, and special characters
+    const args: string[] = [targetPath];
+    if (excludePublic) {
+        args.push('--exclude-public', 'true');
+    } else {
+        args.push('--exclude-public', 'false');
+    }
 
-    terminal.show();
+    const execution = new vscode.ShellExecution(cliPath, args);
+    const task = new vscode.Task(
+        { type: 'shell', task: 'Dotnet Unused Analysis' },
+        vscode.TaskScope.Workspace,
+        'Dotnet Unused Analysis',
+        'dotnet-unused',
+        execution
+    );
 
-    const command = `${cliPath} "${targetPath}" --exclude-public ${excludePublic}`;
-    terminal.sendText(command);
-
+    await vscode.tasks.executeTask(task);
     vscode.window.showInformationMessage(`Running analysis in terminal...`);
 }
 

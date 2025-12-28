@@ -9,6 +9,14 @@ public class Program
 {
     public static async Task<int> Main(string[] args)
     {
+        using var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (sender, e) =>
+        {
+            e.Cancel = true;
+            cts.Cancel();
+            AnsiConsole.MarkupLine("[yellow]Cancellation requested. Cleaning up...[/]");
+        };
+
         try
         {
             // Parse command line arguments
@@ -43,14 +51,23 @@ public class Program
                     case "--exclude-public":
                         if (i + 1 < args.Length)
                         {
-                            excludePublic = bool.Parse(args[++i]);
+                            if (!bool.TryParse(args[++i], out excludePublic))
+                            {
+                                AnsiConsole.MarkupLine("[red]Invalid value for --exclude-public. Expected 'true' or 'false'.[/]");
+                                return 1;
+                            }
                         }
                         break;
                 }
             }
 
-            await ScanAsync(path, format, outputPath, excludePublic);
+            await ScanAsync(path, format, outputPath, excludePublic, cts.Token);
             return 0;
+        }
+        catch (OperationCanceledException)
+        {
+            AnsiConsole.MarkupLine("[yellow]Operation cancelled by user.[/]");
+            return 130; // Standard exit code for SIGINT
         }
         catch (Exception ex)
         {
@@ -83,7 +100,7 @@ public class Program
         AnsiConsole.MarkupLine("  dotnet-unused MySolution.sln --exclude-public false");
     }
 
-    private static async Task ScanAsync(string path, string format, string? outputPath, bool excludePublic)
+    private static async Task ScanAsync(string path, string format, string? outputPath, bool excludePublic, CancellationToken cancellationToken = default)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -93,18 +110,22 @@ public class Program
         var progress = new Progress<string>(msg => AnsiConsole.MarkupLine($"[grey]{msg}[/]"));
 
         // Load solution
+        cancellationToken.ThrowIfCancellationRequested();
         var loader = new SolutionLoader();
-        var solution = await loader.LoadAsync(path, progress);
+        var solution = await loader.LoadAsync(path, progress, cancellationToken);
 
         // Index declared symbols
+        cancellationToken.ThrowIfCancellationRequested();
         var indexer = new SymbolIndexer();
-        var declaredSymbols = await indexer.CollectDeclaredSymbolsAsync(solution, progress);
+        var declaredSymbols = await indexer.CollectDeclaredSymbolsAsync(solution, progress, cancellationToken);
 
         // Find referenced symbols
+        cancellationToken.ThrowIfCancellationRequested();
         var walker = new ReferenceWalker();
-        var referencedSymbols = await walker.CollectReferencedSymbolsAsync(solution, progress);
+        var referencedSymbols = await walker.CollectReferencedSymbolsAsync(solution, progress, cancellationToken);
 
         // Detect unused
+        cancellationToken.ThrowIfCancellationRequested();
         var detector = new UnusedDetector(excludePublic);
         var result = detector.DetectUnused(declaredSymbols, referencedSymbols, progress);
 

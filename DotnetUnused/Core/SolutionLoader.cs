@@ -40,7 +40,7 @@ public sealed class SolutionLoader
     /// <summary>
     /// Loads a solution or project file
     /// </summary>
-    public async Task<Solution> LoadAsync(string path, IProgress<string>? progress = null)
+    public async Task<Solution> LoadAsync(string path, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
     {
         EnsureMSBuildRegistered();
 
@@ -51,8 +51,8 @@ public sealed class SolutionLoader
 
         var workspace = MSBuildWorkspace.Create();
 
-        // Subscribe to workspace failures
-        workspace.WorkspaceFailed += (sender, args) =>
+        // Subscribe to workspace failures using the recommended API
+        workspace.RegisterWorkspaceFailedHandler(args =>
         {
             if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Warning)
             {
@@ -62,7 +62,7 @@ public sealed class SolutionLoader
             {
                 progress?.Report($"Error: {args.Diagnostic.Message}");
             }
-        };
+        });
 
         Solution solution;
 
@@ -90,29 +90,5 @@ public sealed class SolutionLoader
     /// <summary>
     /// Filters out generated files that should be excluded from analysis
     /// </summary>
-    public static bool ShouldAnalyzeDocument(Document document)
-    {
-        var filePath = document.FilePath;
-        if (string.IsNullOrEmpty(filePath))
-        {
-            return false;
-        }
-
-        // Exclude bin/obj directories
-        if (filePath.Contains("\\bin\\") || filePath.Contains("\\obj\\") ||
-            filePath.Contains("/bin/") || filePath.Contains("/obj/"))
-        {
-            return false;
-        }
-
-        // Exclude generated files
-        if (filePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase) ||
-            filePath.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase) ||
-            filePath.EndsWith(".g.i.cs", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return true;
-    }
+    public static bool ShouldAnalyzeDocument(Document document) => FileFilter.ShouldAnalyze(document.FilePath);
 }

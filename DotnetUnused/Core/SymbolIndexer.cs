@@ -15,7 +15,8 @@ public sealed class SymbolIndexer
     /// </summary>
     public async Task<ConcurrentBag<SymbolDefinition>> CollectDeclaredSymbolsAsync(
         Solution solution,
-        IProgress<string>? progress = null)
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         var declaredSymbols = new ConcurrentBag<SymbolDefinition>();
 
@@ -23,9 +24,9 @@ public sealed class SymbolIndexer
         progress?.Report($"Indexing symbols from {projects.Count} projects...");
 
         // Process projects in parallel
-        await Parallel.ForEachAsync(projects, async (project, cancellationToken) =>
+        await Parallel.ForEachAsync(projects, cancellationToken, async (project, ct) =>
         {
-            var compilation = await project.GetCompilationAsync(cancellationToken);
+            var compilation = await project.GetCompilationAsync(ct);
             if (compilation == null)
             {
                 return;
@@ -41,7 +42,7 @@ public sealed class SymbolIndexer
                     continue;
                 }
 
-                var root = await syntaxTree.GetRootAsync(cancellationToken);
+                var root = await syntaxTree.GetRootAsync(ct);
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
 
                 // Walk the syntax tree and collect declarations
@@ -54,17 +55,17 @@ public sealed class SymbolIndexer
                     switch (node)
                     {
                         case MethodDeclarationSyntax method:
-                            symbol = semanticModel.GetDeclaredSymbol(method, cancellationToken);
+                            symbol = semanticModel.GetDeclaredSymbol(method, ct);
                             break;
                         case PropertyDeclarationSyntax property:
-                            symbol = semanticModel.GetDeclaredSymbol(property, cancellationToken);
+                            symbol = semanticModel.GetDeclaredSymbol(property, ct);
                             break;
                         case FieldDeclarationSyntax field:
                             // Fields can have multiple variable declarators
                             foreach (var variable in field.Declaration.Variables)
                             {
-                                var fieldSymbol = semanticModel.GetDeclaredSymbol(variable, cancellationToken);
-                                if (ShouldIndexSymbol(fieldSymbol))
+                                var fieldSymbol = semanticModel.GetDeclaredSymbol(variable, ct);
+                                if (fieldSymbol != null && ShouldIndexSymbol(fieldSymbol))
                                 {
                                     declaredSymbols.Add(new SymbolDefinition(fieldSymbol, variable.GetLocation()));
                                 }
@@ -72,7 +73,7 @@ public sealed class SymbolIndexer
                             continue; // Skip the default handling
                     }
 
-                    if (ShouldIndexSymbol(symbol))
+                    if (symbol != null && ShouldIndexSymbol(symbol))
                     {
                         declaredSymbols.Add(new SymbolDefinition(symbol, node.GetLocation()));
                     }
@@ -84,30 +85,7 @@ public sealed class SymbolIndexer
         return declaredSymbols;
     }
 
-    private static bool ShouldAnalyze(string filePath)
-    {
-        if (string.IsNullOrEmpty(filePath))
-        {
-            return false;
-        }
-
-        // Exclude bin/obj directories
-        if (filePath.Contains("\\bin\\") || filePath.Contains("\\obj\\") ||
-            filePath.Contains("/bin/") || filePath.Contains("/obj/"))
-        {
-            return false;
-        }
-
-        // Exclude generated files
-        if (filePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase) ||
-            filePath.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase) ||
-            filePath.EndsWith(".g.i.cs", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return true;
-    }
+    private static bool ShouldAnalyze(string filePath) => FileFilter.ShouldAnalyze(filePath);
 
     /// <summary>
     /// Determines if a symbol should be indexed for analysis

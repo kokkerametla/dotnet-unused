@@ -94,6 +94,12 @@ public sealed class UnusedDetector
             return false;
         }
 
+        // XAML event handlers - never report as unused
+        if (IsXamlEventHandler(symbol))
+        {
+            return false;
+        }
+
         // Constructors used by DI - be conservative
         if (IsConstructor(symbol))
         {
@@ -201,6 +207,51 @@ public sealed class UnusedDetector
         {
             var attrName = attr.AttributeClass?.Name;
             if (attrName is "UsedImplicitlyAttribute" or "PreserveAttribute")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsXamlEventHandler(ISymbol symbol)
+    {
+        // XAML event handlers are typically:
+        // 1. Private/internal methods (not public)
+        // 2. Return void
+        // 3. Have typical event handler signatures (object sender, EventArgs e)
+        // 4. Named with common patterns: Button_Click, OnLoaded, HandleSomething, etc.
+
+        if (symbol is not IMethodSymbol method)
+        {
+            return false;
+        }
+
+        // Must return void
+        if (method.ReturnsVoid == false)
+        {
+            return false;
+        }
+
+        // Check for common XAML/WPF event handler naming patterns
+        var name = method.Name;
+        if (name.Contains("_Click") || name.Contains("_OnClick") ||
+            name.Contains("_Loaded") || name.Contains("_OnLoaded") ||
+            name.Contains("_Changed") || name.Contains("_OnChanged") ||
+            name.Contains("_Checked") || name.Contains("_OnChecked") ||
+            name.Contains("_Selected") || name.Contains("_OnSelected") ||
+            name.Contains("_Closing") || name.Contains("_Closed") ||
+            name.StartsWith("On") || name.StartsWith("Handle") ||
+            name.EndsWith("Handler") || name.EndsWith("_Click") ||
+            name.EndsWith("_OnClick"))
+        {
+            // Check if it has event handler signature (sender, args) or no parameters
+            var parameters = method.Parameters;
+            if (parameters.Length == 0 ||
+                (parameters.Length == 2 &&
+                 parameters[0].Type.Name == "Object" &&
+                 parameters[1].Type.Name.Contains("EventArgs")))
             {
                 return true;
             }

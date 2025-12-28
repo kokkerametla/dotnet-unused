@@ -84,7 +84,7 @@
         "dotnet-unused.useTerminal": {
           "type": "boolean",
           "default": true,
-          "description": "Show analysis output in integrated terminal instead of output window"
+          "description": "Show analysis output in integrated terminal instead of output window (diagnostics and tree view are only available with output window mode)"
         }
       }
     },
@@ -93,7 +93,7 @@
         {
           "id": "dotnet-unused-explorer",
           "title": "Dotnet Unused",
-          "icon": "icon.png"
+          "icon": "$(search)"
         }
       ]
     },
