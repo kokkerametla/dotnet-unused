@@ -24,6 +24,10 @@ public class FileFilterEdgeCasesTests
     [InlineData("C:\\obj\\MyClass.cs", false)] // obj at root
     [InlineData("bin\\MyClass.cs", false)] // relative path with bin
     [InlineData("obj\\MyClass.cs", false)] // relative path with obj
+    [InlineData("C:\\project\\bin\\MyClass.cs", false)] // path contains \bin\
+    [InlineData("C:\\project\\obj\\MyClass.cs", false)] // path contains \obj\
+    [InlineData("/project/bin/MyClass.cs", false)] // Unix path contains /bin/
+    [InlineData("/project/obj/MyClass.cs", false)] // Unix path contains /obj/
     public void ShouldAnalyze_ExcludesBinObjAtAnyLevel(string filePath, bool expected)
     {
         // Act & Assert
@@ -109,6 +113,18 @@ public class FileFilterEdgeCasesTests
 
         // Assert - whitespace-only should be treated as invalid
         Assert.False(result);
+    }
+
+    [Theory]
+    [InlineData("C:\\project\\bin\\MyClass.cs", false)] // File in bin directory
+    [InlineData("C:\\project\\obj\\MyClass.cs", false)] // File in obj directory
+    [InlineData("C:\\MyApp\\Debug\\bin\\output.cs", false)] // bin as subdirectory
+    [InlineData("/home/user/project/obj/test.cs", false)] // obj directory in Unix path
+    public void ShouldAnalyze_ExcludesBinObjAsTerminalDirectory(string filePath, bool expected)
+    {
+        // Paths ending with bin/obj directories should be excluded
+        // Act & Assert
+        Assert.Equal(expected, FileFilter.ShouldAnalyze(filePath));
     }
 
     [Theory]

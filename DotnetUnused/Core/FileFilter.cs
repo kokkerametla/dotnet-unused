@@ -23,11 +23,13 @@ public static class FileFilter
             return false;
         }
 
-        // Exclude bin/obj directories (both absolute and relative paths)
+        // Exclude bin/obj directories (all positions: start, middle, end)
         if (filePath.Contains("\\bin\\") || filePath.Contains("\\obj\\") ||
             filePath.Contains("/bin/") || filePath.Contains("/obj/") ||
             filePath.StartsWith("bin\\") || filePath.StartsWith("obj\\") ||
-            filePath.StartsWith("bin/") || filePath.StartsWith("obj/"))
+            filePath.StartsWith("bin/") || filePath.StartsWith("obj/") ||
+            filePath.EndsWith("\\bin") || filePath.EndsWith("\\obj") ||
+            filePath.EndsWith("/bin") || filePath.EndsWith("/obj"))
         {
             return false;
         }
