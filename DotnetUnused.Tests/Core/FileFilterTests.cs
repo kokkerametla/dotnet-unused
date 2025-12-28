@@ -134,9 +134,10 @@ public class FileFilterTests
     }
 
     [Theory]
-    [InlineData("MyDesigner.cs", true)] // Contains ".Designer." but doesn't end with it
-    [InlineData("DesignerHelpers.cs", true)] // Contains "Designer" but not ".Designer."
-    [InlineData("Program.g.cs.backup", true)] // Contains ".g.cs" but doesn't end with it
+    [InlineData("MyDesigner.cs", true)] // Contains "Designer" but ends with .cs - allowed
+    [InlineData("DesignerHelpers.cs", true)] // Contains "Designer" but not .Designer.cs pattern
+    [InlineData("Program.g.cs.backup", false)] // Doesn't end with .cs - excluded
+    [InlineData("Program.cs", true)] // Regular .cs file - allowed
     public void ShouldAnalyze_RequiresExactFileExtensionMatch(string filePath, bool expected)
     {
         // Act & Assert

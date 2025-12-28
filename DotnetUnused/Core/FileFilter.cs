@@ -17,6 +17,12 @@ public static class FileFilter
             return false;
         }
 
+        // Only analyze .cs files (exclude .cshtml, .razor, .xaml, etc.)
+        if (!filePath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         // Exclude bin/obj directories (both absolute and relative paths)
         if (filePath.Contains("\\bin\\") || filePath.Contains("\\obj\\") ||
             filePath.Contains("/bin/") || filePath.Contains("/obj/") ||
@@ -26,7 +32,7 @@ public static class FileFilter
             return false;
         }
 
-        // Exclude generated files (only for .cs files)
+        // Exclude generated files
         if (filePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase) ||
             filePath.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase) ||
             filePath.EndsWith(".g.i.cs", StringComparison.OrdinalIgnoreCase))

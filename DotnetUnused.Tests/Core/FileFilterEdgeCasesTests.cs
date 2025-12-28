@@ -54,20 +54,23 @@ public class FileFilterEdgeCasesTests
     }
 
     [Theory]
-    [InlineData("MyClass.cshtml", true)] // Razor files should be analyzed
-    [InlineData("MyClass.razor", true)] // Blazor files should be analyzed
-    [InlineData("MyClass.cs.bak", true)] // Backup files should be analyzed
-    [InlineData("MyClass.cs.old", true)] // Old files should be analyzed
-    public void ShouldAnalyze_AllowsNonStandardButValidCSharpFiles(string filePath, bool expected)
+    [InlineData("MyClass.cshtml", false)] // Razor files are not pure C# - should be excluded
+    [InlineData("MyClass.razor", false)] // Blazor files are not pure C# - should be excluded
+    [InlineData("MyClass.cs.bak", false)] // Backup files don't end with .cs - excluded
+    [InlineData("MyClass.cs.old", false)] // Old files don't end with .cs - excluded
+    [InlineData("MyClass.xaml", false)] // XAML files should be excluded
+    [InlineData("MyClass.xaml.cs", true)] // XAML code-behind is C# and should be analyzed
+    [InlineData("Program.cs", true)] // Regular C# files
+    public void ShouldAnalyze_OnlyAllowsPureCSharpFiles(string filePath, bool expected)
     {
         // Act & Assert
         Assert.Equal(expected, FileFilter.ShouldAnalyze(filePath));
     }
 
     [Theory]
-    [InlineData("C:\\MyProject\\SomeDesigner.cs", true)] // Not ".Designer.cs"
-    [InlineData("C:\\MyProject\\MyClass.gcs", true)] // Not ".g.cs"
-    [InlineData("C:\\MyProject\\Test.Designer.txt", true)] // Designer but not .cs
+    [InlineData("C:\\MyProject\\SomeDesigner.cs", true)] // Ends with .cs - allowed
+    [InlineData("C:\\MyProject\\MyClass.gcs", false)] // Doesn't end with .cs - excluded
+    [InlineData("C:\\MyProject\\Test.Designer.txt", false)] // Doesn't end with .cs - excluded
     public void ShouldAnalyze_RequiresPreciseExtensionPatterns(string filePath, bool expected)
     {
         // Act & Assert
@@ -109,9 +112,10 @@ public class FileFilterEdgeCasesTests
     }
 
     [Theory]
-    [InlineData("C:\\MyProject\\.Designer.cs", false)] // Starts with .Designer
-    [InlineData("C:\\MyProject\\.g.cs", false)] // Starts with .g
-    [InlineData("C:\\MyProject\\File.Designer.", true)] // Ends with Designer. but no .cs
+    [InlineData("C:\\MyProject\\.Designer.cs", false)] // Starts with .Designer - generated file
+    [InlineData("C:\\MyProject\\.g.cs", false)] // Starts with .g - generated file
+    [InlineData("C:\\MyProject\\File.Designer.", false)] // Doesn't end with .cs - excluded
+    [InlineData("C:\\MyProject\\File.cs", true)] // Regular .cs file - allowed
     public void ShouldAnalyze_HandlesEdgeCaseExtensions(string filePath, bool expected)
     {
         // Act & Assert
