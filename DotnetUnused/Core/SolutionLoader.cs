@@ -51,8 +51,8 @@ public sealed class SolutionLoader
 
         var workspace = MSBuildWorkspace.Create();
 
-        // Subscribe to workspace failures
-        workspace.WorkspaceFailed += (sender, args) =>
+        // Subscribe to workspace failures using the recommended API
+        workspace.RegisterWorkspaceFailedHandler(args =>
         {
             if (args.Diagnostic.Kind == WorkspaceDiagnosticKind.Warning)
             {
@@ -62,7 +62,7 @@ public sealed class SolutionLoader
             {
                 progress?.Report($"Error: {args.Diagnostic.Message}");
             }
-        };
+        });
 
         Solution solution;
 

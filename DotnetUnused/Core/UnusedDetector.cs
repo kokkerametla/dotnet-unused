@@ -234,12 +234,17 @@ public sealed class UnusedDetector
             return false;
         }
 
-        // Check for common XAML event handler naming patterns
+        // Check for common XAML/WPF event handler naming patterns
         var name = method.Name;
-        if (name.Contains("_Click") || name.Contains("_Loaded") ||
-            name.Contains("_Changed") || name.Contains("_Checked") ||
-            name.Contains("_Selected") || name.StartsWith("On") ||
-            name.StartsWith("Handle") || name.EndsWith("Handler"))
+        if (name.Contains("_Click") || name.Contains("_OnClick") ||
+            name.Contains("_Loaded") || name.Contains("_OnLoaded") ||
+            name.Contains("_Changed") || name.Contains("_OnChanged") ||
+            name.Contains("_Checked") || name.Contains("_OnChecked") ||
+            name.Contains("_Selected") || name.Contains("_OnSelected") ||
+            name.Contains("_Closing") || name.Contains("_Closed") ||
+            name.StartsWith("On") || name.StartsWith("Handle") ||
+            name.EndsWith("Handler") || name.EndsWith("_Click") ||
+            name.EndsWith("_OnClick"))
         {
             // Check if it has event handler signature (sender, args) or no parameters
             var parameters = method.Parameters;

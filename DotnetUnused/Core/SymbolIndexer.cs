@@ -55,17 +55,17 @@ public sealed class SymbolIndexer
                     switch (node)
                     {
                         case MethodDeclarationSyntax method:
-                            symbol = semanticModel.GetDeclaredSymbol(method, cancellationToken);
+                            symbol = semanticModel.GetDeclaredSymbol(method, ct);
                             break;
                         case PropertyDeclarationSyntax property:
-                            symbol = semanticModel.GetDeclaredSymbol(property, cancellationToken);
+                            symbol = semanticModel.GetDeclaredSymbol(property, ct);
                             break;
                         case FieldDeclarationSyntax field:
                             // Fields can have multiple variable declarators
                             foreach (var variable in field.Declaration.Variables)
                             {
-                                var fieldSymbol = semanticModel.GetDeclaredSymbol(variable, cancellationToken);
-                                if (ShouldIndexSymbol(fieldSymbol))
+                                var fieldSymbol = semanticModel.GetDeclaredSymbol(variable, ct);
+                                if (fieldSymbol != null && ShouldIndexSymbol(fieldSymbol))
                                 {
                                     declaredSymbols.Add(new SymbolDefinition(fieldSymbol, variable.GetLocation()));
                                 }
@@ -73,7 +73,7 @@ public sealed class SymbolIndexer
                             continue; // Skip the default handling
                     }
 
-                    if (ShouldIndexSymbol(symbol))
+                    if (symbol != null && ShouldIndexSymbol(symbol))
                     {
                         declaredSymbols.Add(new SymbolDefinition(symbol, node.GetLocation()));
                     }
