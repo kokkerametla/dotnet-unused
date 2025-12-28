@@ -43,6 +43,9 @@ jobs:
     - name: Build
       run: dotnet build DotnetUnused/DotnetUnused.csproj -c Release --no-restore
 
+    - name: Run Unit Tests
+      run: dotnet test DotnetUnused.Tests/DotnetUnused.Tests.csproj -c Release --verbosity normal
+
     - name: Pack as dotnet tool
       run: dotnet pack DotnetUnused/DotnetUnused.csproj -c Release --no-build -o ./artifacts /p:Version=${{ steps.gitversion.outputs.nuGetVersion }}
 

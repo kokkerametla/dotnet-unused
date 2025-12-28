@@ -1,5 +1,10 @@
 # Dotnet Unused
 
+[![Build and Test](https://github.com/kokkerametla/dotnet-unused/actions/workflows/build.yml/badge.svg)](https://github.com/kokkerametla/dotnet-unused/actions/workflows/build.yml)
+[![Release](https://github.com/kokkerametla/dotnet-unused/actions/workflows/release.yml/badge.svg)](https://github.com/kokkerametla/dotnet-unused/actions/workflows/release.yml)
+[![NuGet](https://img.shields.io/nuget/v/DotnetUnused.svg)](https://www.nuget.org/packages/DotnetUnused/)
+[![VS Code Extension](https://img.shields.io/visual-studio-marketplace/v/kokkerametla.dotnet-unused-vscode)](https://marketplace.visualstudio.com/items?itemName=kokkerametla.dotnet-unused-vscode)
+
 A high-performance CLI tool for detecting unused code in .NET solutions and projects using Roslyn static analysis.
 
 ## Features
