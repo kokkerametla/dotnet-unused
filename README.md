@@ -289,7 +289,7 @@ If unused usings aren't being detected:
 - Ensure the project builds successfully
 - Check that CS8019 warnings are enabled in the project
 - Verify analyzers are available (SDK projects have them by default)
-- Use `--skip-usings` was not specified
+- Ensure `--skip-usings` was not specified
 
 ### Auto-Fix Not Working
 
