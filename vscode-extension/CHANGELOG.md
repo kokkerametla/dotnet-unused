@@ -1,5 +1,17 @@
 # Change Log
 
+## [Unreleased]
+
+## [1.0.0] - TBD
+
+### Added
+- Unused using directives detection (enabled by default)
+- `dotnet-unused.skipUsings` configuration option to disable (default: false)
+- Inline diagnostics for unused using statements with hint severity
+- Separate tree view section for unused usings
+- Code action to remove unused using
+- Code action to remove all unused usings in file
+
 ## [0.1.1] - 2025-12-28
 
 ### Fixed

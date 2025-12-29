@@ -27,6 +27,7 @@ public sealed class ReportWriter
         summaryTable.AddRow("Total Symbols Analyzed", result.TotalSymbolsAnalyzed.ToString());
         summaryTable.AddRow("Total References Found", result.TotalReferencesFound.ToString());
         summaryTable.AddRow("Unused Symbols", $"[red]{result.UnusedSymbols.Count}[/]");
+        summaryTable.AddRow("Unused Usings", $"[yellow]{result.UnusedUsings.Count}[/]");
         summaryTable.AddRow("Analysis Duration", $"{result.Duration.TotalSeconds:F2}s");
 
         AnsiConsole.Write(summaryTable);
@@ -64,6 +65,43 @@ public sealed class ReportWriter
             AnsiConsole.Write(table);
         }
 
+        // Display unused usings
+        if (result.UnusedUsings.Count > 0)
+        {
+            AnsiConsole.WriteLine();
+            AnsiConsole.Write(new Rule($"[yellow]Unused Using Directives ({result.UnusedUsings.Count})[/]").RuleStyle("grey").LeftJustified());
+            AnsiConsole.WriteLine();
+
+            // Group by file
+            var groupedByFile = result.UnusedUsings
+                .GroupBy(u => u.FilePath)
+                .OrderBy(g => g.Key);
+
+            var usingTable = new Table()
+                .Border(TableBorder.Rounded)
+                .AddColumn("File")
+                .AddColumn("Line")
+                .AddColumn("Using Directive");
+
+            foreach (var fileGroup in groupedByFile)
+            {
+                var fileName = Path.GetFileName(fileGroup.Key);
+                var isFirst = true;
+
+                foreach (var unusedUsing in fileGroup.OrderBy(u => u.LineNumber))
+                {
+                    usingTable.AddRow(
+                        isFirst ? fileName : "",
+                        unusedUsing.LineNumber.ToString(),
+                        $"[dim]{unusedUsing.Namespace}[/]"
+                    );
+                    isFirst = false;
+                }
+            }
+
+            AnsiConsole.Write(usingTable);
+        }
+
         AnsiConsole.WriteLine();
     }
 
@@ -78,7 +116,8 @@ public sealed class ReportWriter
             {
                 result.TotalSymbolsAnalyzed,
                 result.TotalReferencesFound,
-                UnusedCount = result.UnusedSymbols.Count,
+                UnusedSymbolsCount = result.UnusedSymbols.Count,
+                UnusedUsingsCount = result.UnusedUsings.Count,
                 DurationSeconds = result.Duration.TotalSeconds
             },
             UnusedSymbols = result.UnusedSymbols.Select(s => new
@@ -87,7 +126,14 @@ public sealed class ReportWriter
                 s.FullyQualifiedName,
                 s.FilePath,
                 s.LineNumber
-            }).OrderBy(s => s.FilePath).ThenBy(s => s.LineNumber).ToList()
+            }).OrderBy(s => s.FilePath).ThenBy(s => s.LineNumber).ToList(),
+            UnusedUsings = result.UnusedUsings.Select(u => new
+            {
+                u.FilePath,
+                u.LineNumber,
+                u.Namespace,
+                u.Message
+            }).OrderBy(u => u.FilePath).ThenBy(u => u.LineNumber).ToList()
         };
 
         var options = new JsonSerializerOptions

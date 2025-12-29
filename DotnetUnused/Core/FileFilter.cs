@@ -34,6 +34,15 @@ public static class FileFilter
             return false;
         }
 
+        // Exclude EF Core migrations (auto-generated, typically have timestamp patterns)
+        // But allow user files in Migrations folder that don't match migration patterns
+        if ((filePath.Contains("\\Migrations\\") || filePath.Contains("/Migrations/")) &&
+            (filePath.Contains("ModelSnapshot.cs") ||
+             System.Text.RegularExpressions.Regex.IsMatch(filePath, @"\d{14,}_"))) // Timestamp pattern like 20231226120000_
+        {
+            return false;
+        }
+
         // Exclude generated files
         if (filePath.EndsWith(".g.cs", StringComparison.OrdinalIgnoreCase) ||
             filePath.EndsWith(".Designer.cs", StringComparison.OrdinalIgnoreCase) ||
