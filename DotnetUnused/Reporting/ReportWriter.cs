@@ -116,6 +116,7 @@ public sealed class ReportWriter
             {
                 result.TotalSymbolsAnalyzed,
                 result.TotalReferencesFound,
+                UnusedCount = result.UnusedSymbols.Count, // Deprecated: Use UnusedSymbolsCount instead
                 UnusedSymbolsCount = result.UnusedSymbols.Count,
                 UnusedUsingsCount = result.UnusedUsings.Count,
                 DurationSeconds = result.Duration.TotalSeconds

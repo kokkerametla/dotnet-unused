@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Summary table includes unused usings count
 - FileFilter now excludes Migrations folder for EF Core auto-generated files
 
+### Deprecated
+- **JSON API**: `Summary.UnusedCount` field is deprecated in favor of `Summary.UnusedSymbolsCount` for clarity
+  - Both fields are currently present for backward compatibility
+  - `UnusedCount` will be removed in v2.0.0
+  - Consumers should migrate to `UnusedSymbolsCount` which more accurately describes the counted items
+
 ### Fixed
 - File formatting preservation when using --fix (no more unwanted reformatting)
 - Batch removal of all unused usings in one operation (prevents line number conflicts)
