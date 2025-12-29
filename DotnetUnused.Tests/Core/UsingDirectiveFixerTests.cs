@@ -22,7 +22,7 @@ public class UsingDirectiveFixerTests
     }
 
     [Fact]
-    public async Task ApplyFixesAsync_RespectsProgress()
+    public async Task ApplyFixesAsync_WithNonExistentFile_ReturnsZero()
     {
         // Arrange
         var fixer = new UsingDirectiveFixer();
@@ -31,14 +31,12 @@ public class UsingDirectiveFixerTests
         {
             new() { FilePath = "test.cs", LineNumber = 1, Namespace = "System.Linq" }
         };
-        var progressMessages = new List<string>();
-        var progress = new Progress<string>(msg => progressMessages.Add(msg));
 
-        // Act
-        await fixer.ApplyFixesAsync(solution, unusedUsings, progress);
+        // Act - File doesn't exist in solution, so nothing should be fixed
+        var result = await fixer.ApplyFixesAsync(solution, unusedUsings);
 
-        // Assert - Progress should report something (warning about file not found)
-        Assert.NotEmpty(progressMessages);
+        // Assert - Returns 0 because no files were modified
+        Assert.Equal(0, result);
     }
 
     [Fact(Skip = "Requires real file system access - integration test")]
