@@ -91,9 +91,9 @@ public sealed class UsingDirectiveFixer
                     continue;
                 }
 
-                // Write back to file with original formatting preserved
+                // Write back to file with original formatting preserved using atomic write
                 var newText = newRoot.ToFullString();
-                await File.WriteAllTextAsync(filePath, newText, cancellationToken);
+                await WriteFileAtomicallyAsync(filePath, newText, cancellationToken);
 
                 filesModified++;
                 usingsRemoved += usingsToRemove.Count;
@@ -127,5 +127,42 @@ public sealed class UsingDirectiveFixer
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Writes content to a file atomically using temp file + rename pattern
+    /// This prevents file corruption if write fails or is cancelled
+    /// </summary>
+    private static async Task WriteFileAtomicallyAsync(string filePath, string content, CancellationToken cancellationToken)
+    {
+        string? tempFile = null;
+        try
+        {
+            // Create temp file in same directory to ensure same volume (required for atomic move)
+            var directory = Path.GetDirectoryName(filePath) ?? Directory.GetCurrentDirectory();
+            tempFile = Path.Combine(directory, $".{Path.GetFileName(filePath)}.{Guid.NewGuid()}.tmp");
+
+            // Write to temp file
+            await File.WriteAllTextAsync(tempFile, content, cancellationToken);
+
+            // Atomic replace: this is an atomic operation on Windows and Unix
+            File.Move(tempFile, filePath, overwrite: true);
+            tempFile = null; // Successfully moved, don't delete in finally
+        }
+        finally
+        {
+            // Clean up temp file if it still exists (write failed)
+            if (tempFile != null && File.Exists(tempFile))
+            {
+                try
+                {
+                    File.Delete(tempFile);
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
     }
 }

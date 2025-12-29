@@ -72,8 +72,7 @@ public sealed class UnusedUsingAnalyzer
                     var filePath = lineSpan.Path;
 
                     // Skip external dependencies (NuGet packages, SDK files)
-                    if (filePath.Contains(".nuget") || filePath.Contains("Microsoft.NET.") ||
-                        filePath.Contains("\\packages\\") || filePath.Contains("/packages/"))
+                    if (IsExternalDependency(filePath))
                     {
                         continue;
                     }
@@ -102,6 +101,54 @@ public sealed class UnusedUsingAnalyzer
 
         progress?.Report($"Found {results.Count} unused using directives");
         return results.OrderBy(u => u.FilePath).ThenBy(u => u.LineNumber).ToList();
+    }
+
+    /// <summary>
+    /// Checks if a file path belongs to external dependencies (NuGet, SDK)
+    /// Uses precise path checks to avoid false positives
+    /// </summary>
+    private static bool IsExternalDependency(string filePath)
+    {
+        try
+        {
+            var normalizedPath = Path.GetFullPath(filePath).Replace('\\', '/');
+
+            // Check for NuGet global packages folder (e.g., C:\Users\user\.nuget\packages\)
+            if (normalizedPath.Contains("/.nuget/packages/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Check for NuGet packages folder in solution (e.g., MySolution\packages\)
+            if (normalizedPath.Contains("/packages/") &&
+                (normalizedPath.Contains("/packages/Microsoft.") ||
+                 normalizedPath.Contains("/packages/System.") ||
+                 normalizedPath.Contains("/packages/NuGet.")))
+            {
+                return true;
+            }
+
+            // Check for .NET SDK reference assemblies
+            if (normalizedPath.Contains("/Microsoft.NET.Sdk/", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.Contains("/dotnet/shared/", StringComparison.OrdinalIgnoreCase) ||
+                normalizedPath.Contains("/dotnet/packs/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Check for Program Files .NET installations
+            if (normalizedPath.Contains("/Program Files/dotnet/", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        catch
+        {
+            // If path normalization fails, be conservative and don't exclude
+            return false;
+        }
     }
 
     /// <summary>
