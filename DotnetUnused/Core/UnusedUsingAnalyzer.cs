@@ -152,34 +152,49 @@ public sealed class UnusedUsingAnalyzer
     }
 
     /// <summary>
-    /// Extracts the namespace from the IDE0005 diagnostic message
+    /// Extracts the namespace from the IDE0005 diagnostic message using Roslyn syntax parsing
     /// </summary>
     private static string ExtractNamespaceFromDiagnostic(Diagnostic diagnostic)
     {
         // IDE0005 message format: "Using directive is unnecessary."
-        // The actual namespace is in the source span
+        // Use Roslyn to parse the using directive properly
         var sourceTree = diagnostic.Location.SourceTree;
         if (sourceTree != null)
         {
-            var span = diagnostic.Location.SourceSpan;
-            var text = sourceTree.GetText().GetSubText(span).ToString();
-
-            // Extract namespace from "using System.Linq;" -> "System.Linq"
-            text = text.Replace("using", "").Replace(";", "").Trim();
-
-            // Handle "using static" -> remove "static"
-            if (text.StartsWith("static "))
+            try
             {
-                text = text.Substring(7).Trim();
-            }
+                var root = sourceTree.GetRoot();
+                var node = root.FindNode(diagnostic.Location.SourceSpan);
 
-            // Handle "global using" -> remove "global"
-            if (text.StartsWith("global "))
+                // Find the UsingDirectiveSyntax node
+                var usingDirective = node as Microsoft.CodeAnalysis.CSharp.Syntax.UsingDirectiveSyntax
+                    ?? node.AncestorsAndSelf().OfType<Microsoft.CodeAnalysis.CSharp.Syntax.UsingDirectiveSyntax>().FirstOrDefault();
+
+                if (usingDirective != null)
+                {
+                    // Extract the name from the using directive
+                    // This handles regular usings, static usings, and alias usings correctly
+                    if (usingDirective.Alias != null)
+                    {
+                        // Handle: using Alias = Namespace.Type;
+                        return $"{usingDirective.Alias.Name} = {usingDirective.Name}";
+                    }
+                    else if (usingDirective.StaticKeyword.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.StaticKeyword))
+                    {
+                        // Handle: using static Namespace.Type;
+                        return $"static {usingDirective.Name}";
+                    }
+                    else
+                    {
+                        // Handle: using Namespace; or global using Namespace;
+                        return usingDirective.Name?.ToString() ?? string.Empty;
+                    }
+                }
+            }
+            catch
             {
-                text = text.Substring(7).Trim();
+                // Fallback to text extraction if parsing fails
             }
-
-            return text;
         }
 
         return diagnostic.GetMessage();

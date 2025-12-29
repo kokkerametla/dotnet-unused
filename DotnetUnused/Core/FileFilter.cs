@@ -1,10 +1,19 @@
+using System.Text.RegularExpressions;
+
 namespace DotnetUnused.Core;
 
 /// <summary>
 /// Utility class for filtering files during analysis.
 /// </summary>
-public static class FileFilter
+public static partial class FileFilter
 {
+    /// <summary>
+    /// Compiled regex for EF Core migration timestamp pattern (e.g., 20231226120000_Initial)
+    /// Uses source generation for optimal performance
+    /// </summary>
+    [GeneratedRegex(@"\d{14,}_", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    private static partial Regex MigrationTimestampPattern();
+
     /// <summary>
     /// Determines whether a file should be analyzed based on its path.
     /// </summary>
@@ -38,7 +47,7 @@ public static class FileFilter
         // But allow user files in Migrations folder that don't match migration patterns
         if ((filePath.Contains("\\Migrations\\") || filePath.Contains("/Migrations/")) &&
             (filePath.Contains("ModelSnapshot.cs") ||
-             System.Text.RegularExpressions.Regex.IsMatch(filePath, @"\d{14,}_"))) // Timestamp pattern like 20231226120000_
+             MigrationTimestampPattern().IsMatch(filePath))) // Timestamp pattern like 20231226120000_
         {
             return false;
         }
