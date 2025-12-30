@@ -174,9 +174,9 @@ jobs:
           Search for "Dotnet Unused" in VS Code Extensions or visit the [marketplace page](https://marketplace.visualstudio.com/items?itemName=kokkerametla.dotnet-unused-vscode).
 
           **Or install from VSIX** (offline installation):
-          Download `dotnet-unused-vscode-${{ steps.gitversion.outputs.semVer }}.vsix` and run:
+          Download `dotnet-unused-vscode-${{ steps.gitversion.outputs.majorMinorPatch }}.vsix` and run:
           ```bash
-          code --install-extension dotnet-unused-vscode-${{ steps.gitversion.outputs.semVer }}.vsix
+          code --install-extension dotnet-unused-vscode-${{ steps.gitversion.outputs.majorMinorPatch }}.vsix
           ```
 
           ### What's New
@@ -223,8 +223,8 @@ jobs:
     - name: Update extension version
       working-directory: ./vscode-extension
       run: |
-        npm version ${{ steps.gitversion.outputs.semVer }} --no-git-tag-version
-        echo "Updated extension version to ${{ steps.gitversion.outputs.semVer }}"
+        npm version ${{ steps.gitversion.outputs.majorMinorPatch }} --no-git-tag-version
+        echo "Updated extension version to ${{ steps.gitversion.outputs.majorMinorPatch }}"
 
     - name: Compile extension
       working-directory: ./vscode-extension
@@ -234,7 +234,7 @@ jobs:
       working-directory: ./vscode-extension
       run: |
         npx @vscode/vsce package
-        echo "Created: dotnet-unused-vscode-${{ steps.gitversion.outputs.semVer }}.vsix"
+        echo "Created: dotnet-unused-vscode-${{ steps.gitversion.outputs.majorMinorPatch }}.vsix"
 
     - name: Upload VSIX as artifact
       uses: actions/upload-artifact@v4
