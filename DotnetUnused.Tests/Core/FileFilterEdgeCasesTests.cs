@@ -137,4 +137,27 @@ public class FileFilterEdgeCasesTests
         // Act & Assert
         Assert.Equal(expected, FileFilter.ShouldAnalyze(filePath));
     }
+
+    [Theory]
+    [InlineData("C:\\MyProject\\Migrations\\20231226120000_Initial.cs", false)]
+    [InlineData("C:\\MyProject\\Migrations\\20240101000000_AddUsers.cs", false)]
+    [InlineData("C:\\MyProject\\Migrations\\FoodDbContextModelSnapshot.cs", false)]
+    [InlineData("C:\\MyProject\\Migrations\\Initial.cs", true)]
+    [InlineData("C:\\MyProject\\Migrations\\Configuration.cs", true)]
+    [InlineData("C:\\MyProject\\Data\\Migrations\\20231226120000_Init.cs", false)]
+    [InlineData("/project/Migrations/20231226120000_Initial.cs", false)]
+    public void ShouldAnalyze_HandlesEFCoreMigrations(string filePath, bool expected)
+    {
+        // EF Core migrations should be excluded, user files in Migrations folder allowed
+        Assert.Equal(expected, FileFilter.ShouldAnalyze(filePath));
+    }
+
+    [Theory]
+    [InlineData("C:\\MyProject\\MigrationsHelper.cs", true)]
+    [InlineData("C:\\MyProject\\src\\20231226_Document.cs", true)]
+    [InlineData("C:\\MyProject\\DataMigrations\\Script.cs", true)]
+    public void ShouldAnalyze_OnlyExcludesEFMigrationsNotSimilarNames(string filePath, bool expected)
+    {
+        Assert.Equal(expected, FileFilter.ShouldAnalyze(filePath));
+    }
 }

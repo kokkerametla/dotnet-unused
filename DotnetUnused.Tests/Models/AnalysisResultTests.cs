@@ -110,4 +110,50 @@ public class AnalysisResultTests
         // Assert - should never be null, always initialized
         Assert.NotNull(result.UnusedSymbols);
     }
+
+    [Fact]
+    public void UnusedUsings_IsNotNull_AfterConstruction()
+    {
+        // Act
+        var result = new AnalysisResult();
+
+        // Assert - should never be null, always initialized
+        Assert.NotNull(result.UnusedUsings);
+        Assert.Empty(result.UnusedUsings);
+    }
+
+    [Fact]
+    public void AddUnusedUsing_AddsToCollection()
+    {
+        // Arrange
+        var result = new AnalysisResult();
+        var usingInfo = new UsingDirectiveInfo
+        {
+            FilePath = "Test.cs",
+            LineNumber = 1,
+            Namespace = "System.Linq"
+        };
+
+        // Act
+        result.AddUnusedUsing(usingInfo);
+
+        // Assert
+        Assert.Single(result.UnusedUsings);
+        Assert.Equal("System.Linq", result.UnusedUsings[0].Namespace);
+    }
+
+    [Fact]
+    public void UnusedUsings_CanContainMultipleEntries()
+    {
+        // Arrange
+        var result = new AnalysisResult();
+
+        // Act
+        result.AddUnusedUsing(new UsingDirectiveInfo { Namespace = "System.Linq" });
+        result.AddUnusedUsing(new UsingDirectiveInfo { Namespace = "System.Collections" });
+        result.AddUnusedUsing(new UsingDirectiveInfo { Namespace = "System.Threading" });
+
+        // Assert
+        Assert.Equal(3, result.UnusedUsings.Count);
+    }
 }

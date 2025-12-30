@@ -6,9 +6,11 @@ Detect and highlight unused code in .NET solutions directly in Visual Studio Cod
 
 - **On-Demand Analysis**: Analyze your entire workspace or just the current file
 - **Inline Diagnostics**: See unused code warnings directly in your editor with squiggly underlines
-- **Problems Panel**: All unused symbols listed in VS Code's Problems panel
-- **Tree View**: Sidebar panel showing unused symbols organized by type (Methods, Properties, Fields)
+- **Unused Usings Detection**: Find unnecessary using directives (enabled by default in v1.0.0+)
+- **Problems Panel**: All unused symbols and usings listed in VS Code's Problems panel
+- **Tree View**: Sidebar panel showing unused symbols and usings organized by type
 - **Configurable Severity**: Set diagnostic severity (Error, Warning, Information, Hint)
+- **Optional Analysis**: Skip usings analysis with configuration setting
 - **Jump to Definition**: Click any unused symbol in the tree view to navigate to its location
 - **Export Reports**: Generate JSON reports of unused code (coming soon)
 
