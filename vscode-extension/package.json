@@ -50,6 +50,11 @@
         "command": "dotnet-unused.exportReport",
         "title": "Export Unused Code Report (JSON)",
         "category": "Dotnet Unused"
+      },
+      {
+        "command": "dotnet-unused.fixUnusedUsings",
+        "title": "Fix Unused Using Directives",
+        "category": "Dotnet Unused"
       }
     ],
     "configuration": {

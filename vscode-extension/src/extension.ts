@@ -41,6 +41,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('dotnet-unused.exportReport', exportReport)
     );
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('dotnet-unused.fixUnusedUsings', fixUnusedUsings)
+    );
+
     const config = vscode.workspace.getConfiguration('dotnet-unused');
     if (config.get<boolean>('autoRunOnSave')) {
         context.subscriptions.push(
@@ -237,6 +241,81 @@ async function findProjectFile(filePath: string): Promise<string | null> {
 
 async function exportReport() {
     vscode.window.showInformationMessage('Export report functionality coming soon!');
+}
+
+async function fixUnusedUsings() {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        vscode.window.showErrorMessage('No workspace folder open');
+        return;
+    }
+
+    const slnFiles = await vscode.workspace.findFiles('**/*.sln', '**/node_modules/**', 10);
+
+    let targetPath: string;
+    if (slnFiles.length === 0) {
+        const csprojFiles = await vscode.workspace.findFiles('**/*.csproj', '**/node_modules/**', 10);
+        if (csprojFiles.length === 0) {
+            vscode.window.showErrorMessage('No .sln or .csproj files found in workspace');
+            return;
+        }
+
+        if (csprojFiles.length === 1) {
+            targetPath = csprojFiles[0].fsPath;
+        } else {
+            const selected = await vscode.window.showQuickPick(
+                csprojFiles.map(f => ({ label: path.basename(f.fsPath), path: f.fsPath })),
+                { placeHolder: 'Select a .csproj file to fix' }
+            );
+            if (!selected) {
+                return;
+            }
+            targetPath = selected.path;
+        }
+    } else {
+        if (slnFiles.length === 1) {
+            targetPath = slnFiles[0].fsPath;
+        } else {
+            const selected = await vscode.window.showQuickPick(
+                slnFiles.map(f => ({ label: path.basename(f.fsPath), path: f.fsPath })),
+                { placeHolder: 'Select a .sln file to fix' }
+            );
+            if (!selected) {
+                return;
+            }
+            targetPath = selected.path;
+        }
+    }
+
+    // Confirm before making changes
+    const confirm = await vscode.window.showWarningMessage(
+        'This will automatically remove unused using directives from your files. Continue?',
+        { modal: true },
+        'Yes',
+        'No'
+    );
+
+    if (confirm !== 'Yes') {
+        return;
+    }
+
+    const config = vscode.workspace.getConfiguration('dotnet-unused');
+    const cliPath = config.get<string>('cliPath') || 'dotnet-unused';
+
+    // Use array for arguments - ShellExecution handles escaping automatically
+    const args: string[] = [targetPath, '--fix'];
+
+    const execution = new vscode.ShellExecution(cliPath, args);
+    const task = new vscode.Task(
+        { type: 'shell', task: 'Fix Unused Usings' },
+        vscode.TaskScope.Workspace,
+        'Fix Unused Using Directives',
+        'dotnet-unused',
+        execution
+    );
+
+    await vscode.tasks.executeTask(task);
+    vscode.window.showInformationMessage('Removing unused using directives...');
 }
 
 export function deactivate() {
