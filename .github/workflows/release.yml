@@ -245,7 +245,7 @@ jobs:
         if-no-files-found: warn  # Warn but don't fail if no files found
 
     - name: Publish to VS Code Marketplace
-      if: github.event_name != 'workflow_dispatch' && success()  # Only publish on tag push and if build succeeded
+      if: success()  # Publish if build succeeded (works for both tag push and workflow_dispatch)
       working-directory: ./vscode-extension
       run: npx @vscode/vsce publish --pat ${{ secrets.VSCE_PAT }}
       continue-on-error: true  # Don't fail the workflow if marketplace publishing fails
