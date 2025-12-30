@@ -11,7 +11,7 @@ public static partial class FileFilter
     /// Compiled regex for EF Core migration timestamp pattern (e.g., 20231226120000_Initial)
     /// Uses source generation for optimal performance
     /// </summary>
-    [GeneratedRegex(@"\d{14,}_", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\d{14}_", RegexOptions.Compiled | RegexOptions.CultureInvariant)]
     private static partial Regex MigrationTimestampPattern();
 
     /// <summary>

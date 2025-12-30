@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [1.0.0] - TBD
+## [1.0.0] - 2025-12-29
 
 ### Added
 - Unused using directives detection (enabled by default)
