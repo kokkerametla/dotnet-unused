@@ -13,11 +13,14 @@ A high-performance CLI tool for detecting unused code in .NET solutions and proj
 - **Conservative Detection**: Minimal false positives with smart heuristics
 - **Framework Aware**: Recognizes ASP.NET Core, test frameworks, serialization, and DI patterns
 - **Multiple Formats**: Console output and JSON export
-- **Comprehensive**: Detects unused methods, properties, and fields
+- **Comprehensive**: Detects unused methods, properties, fields, and using directives
+- **Unused Usings Detection**: Identifies unnecessary namespace imports and global usings (CS8019/IDE0005)
+- **Auto-Fix Support**: `--fix` flag automatically removes unused usings while preserving formatting
+- **Smart Filtering**: Excludes EF migrations, generated files, and external dependencies
 - **Broad Compatibility**: Works with both .NET Core/.NET 5+ and .NET Framework projects
 - **Generic Method Support**: Correctly handles generic methods and constructed generic types
 - **Graceful Cancellation**: Ctrl+C support for long-running analysis
-- **Well-Tested**: 85+ unit tests with comprehensive edge case coverage
+- **Well-Tested**: 122+ unit tests with comprehensive edge case coverage
 
 ## VS Code Extension
 
@@ -98,6 +101,8 @@ dotnet run --project DotnetUnused -- path/to/MySolution.sln
 - `--format, -f`: Output format (`text` or `json`, default: `text`)
 - `--output, -o`: Output file path (for JSON format)
 - `--exclude-public`: Exclude public members from detection (default: `true`)
+- `--skip-usings`: Skip unused using directives analysis (default: `false`)
+- `--fix`: Automatically remove unused usings from files (default: `false`)
 - `--help, -h`: Show help information
 
 ### Examples
@@ -115,6 +120,15 @@ dotnet-unused MySolution.sln --format json --output report.json
 # Include public members in analysis
 dotnet-unused MySolution.sln --exclude-public false
 
+# Skip unused using directives analysis (only analyze symbols)
+dotnet-unused MySolution.sln --skip-usings
+
+# Automatically remove unused usings
+dotnet-unused MySolution.sln --fix
+
+# Generate full report with JSON output
+dotnet-unused MySolution.sln --format json --output report.json
+
 # Analyze a single project
 dotnet-unused MyProject.csproj
 ```
@@ -125,9 +139,11 @@ dotnet-unused MyProject.csproj
 
 1. **Load Solution/Project**: Uses MSBuildWorkspace to load the full solution with all dependencies
 2. **Index Declared Symbols**: Scans all syntax trees to collect declared methods, properties, and fields
-3. **Find References**: Single-pass traversal to find all symbol usages
-4. **Compute Unused**: Subtracts referenced symbols from declared symbols
-5. **Apply Heuristics**: Filters out false positives using smart rules
+3. **Extract Using Directives**: Collects all using statements from each file
+4. **Find References**: Single-pass traversal to find all symbol and namespace usages
+5. **Compute Unused**: Subtracts referenced symbols/namespaces from declared symbols/imports
+6. **Apply Heuristics**: Filters out false positives using smart rules
+7. **Report Results**: Outputs unused symbols and using directives
 
 ### Exclusion Heuristics
 
@@ -244,6 +260,44 @@ The tool automatically excludes:
 - **Static Analysis Only**: Does not detect runtime or reflection-based usage
 - **Conservative Approach**: May miss some unused code to avoid false positives
 - **No Incremental Analysis**: Analyzes the entire solution each time
+- **Unused Usings**: Relies on CS8019/IDE0005 diagnostics (requires analyzers to be available)
+
+## Troubleshooting
+
+### Bash vs PowerShell Path Syntax
+
+**In Git Bash / WSL:**
+```bash
+# Use forward slashes
+dotnet-unused ./src/MySolution.sln --fix
+
+# Or quote Windows paths
+dotnet-unused ".\src\MySolution.sln" --fix
+```
+
+**In PowerShell / CMD:**
+```powershell
+# Windows paths work directly
+dotnet-unused .\src\MySolution.sln --fix
+```
+
+**Issue**: Backslashes in bash are escape characters, causing paths like `.\src\Food.sln` to become `.srcFood.sln`.
+
+### No Unused Usings Detected
+
+If unused usings aren't being detected:
+- Ensure the project builds successfully
+- Check that CS8019 warnings are enabled in the project
+- Verify analyzers are available (SDK projects have them by default)
+- Ensure `--skip-usings` was not specified
+
+### Auto-Fix Not Working
+
+If `--fix` doesn't remove usings:
+- Ensure you have write permissions to the files
+- Check that files aren't read-only
+- Verify the solution/project path is correct
+- Review console output for error messages
 
 ## Testing
 
@@ -255,9 +309,11 @@ dotnet test
 ```
 
 **Test Coverage:**
-- 85+ passing unit tests
-- FileFilter utility tests (edge cases, path handling)
-- AnalysisResult model tests
+- 122+ passing unit tests
+- FileFilter utility tests (edge cases, path handling, migrations)
+- AnalysisResult model tests (symbols and usings)
+- UsingDirectiveInfo model tests
+- UnusedUsingAnalyzer tests (integration)
 - Comprehensive edge case validation
 
 See [DotnetUnused.Tests/README.md](./DotnetUnused.Tests/README.md) for details.

@@ -6,6 +6,7 @@ namespace DotnetUnused.Models;
 public sealed class AnalysisResult
 {
     public List<SymbolDefinition> UnusedSymbols { get; } = new();
+    public List<UsingDirectiveInfo> UnusedUsings { get; } = new();
     public TimeSpan Duration { get; set; }
     public int TotalSymbolsAnalyzed { get; set; }
     public int TotalReferencesFound { get; set; }
@@ -13,5 +14,10 @@ public sealed class AnalysisResult
     public void AddUnusedSymbol(SymbolDefinition symbol)
     {
         UnusedSymbols.Add(symbol);
+    }
+
+    public void AddUnusedUsing(UsingDirectiveInfo usingDirective)
+    {
+        UnusedUsings.Add(usingDirective);
     }
 }

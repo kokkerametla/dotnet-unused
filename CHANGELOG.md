@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-12-29
+
+### Added
+- **Unused using directives detection** (enabled by default using CS8019/IDE0005 diagnostics)
+- Identifies unnecessary namespace imports in all C# files
+- Support for global usings analysis (.NET 6+ implicit usings)
+- Automatic handling of extension methods, LINQ, and attributes via Roslyn
+- **`--fix` flag** to automatically remove unused usings from files
+- **`--skip-usings` flag** to disable using analysis for faster symbol-only analysis
+- Smart filtering: excludes EF Core migrations (timestamp patterns, ModelSnapshot)
+- Batch removal of unused usings while preserving file formatting
+- External dependency filtering (NuGet packages, SDK files excluded)
+- File-level using directive cleanup with preserved indentation and spacing
+- JSON output includes unused using locations, namespaces, and messages
+- Console report shows unused usings grouped by file with line numbers
+- Microsoft.CodeAnalysis.Features 5.0.0 dependency for Roslyn analyzer support
+
+### Changed
+- **Extended default analysis** to include using directive validation (can be disabled with --skip-usings)
+- Updated report format to include "Unused Using Directives" section
+- Console output now shows both unused symbols and unused usings by default
+- Summary table includes unused usings count
+- FileFilter now excludes Migrations folder for EF Core auto-generated files
+
+### Deprecated
+- **JSON API**: `Summary.UnusedCount` field is deprecated in favor of `Summary.UnusedSymbolsCount` for clarity
+  - Both fields are currently present for backward compatibility
+  - `UnusedCount` will be removed in v2.0.0
+  - Consumers should migrate to `UnusedSymbolsCount` which more accurately describes the counted items
+
+### Fixed
+- File formatting preservation when using --fix (no more unwanted reformatting)
+- Batch removal of all unused usings in one operation (prevents line number conflicts)
+- Smart migration detection (excludes EF migrations, allows user files in Migrations folder)
+
 ## [0.1.1] - 2025-12-28
 
 ### Added
