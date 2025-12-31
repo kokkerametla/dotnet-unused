@@ -26,28 +26,38 @@ A high-performance CLI tool for detecting unused code in .NET solutions and proj
 
 A [Visual Studio Code extension](./vscode-extension) is available for detecting unused code directly in your editor:
 
+- **One-Click Installation**: Automatically installs CLI tool if missing
+- **Auto-Fix Unused Usings**: Remove all unused using directives with one command
 - **Inline Diagnostics**: Squiggly underlines for unused code
 - **Tree View**: Browse unused symbols in sidebar
 - **Terminal Integration**: See CLI output in integrated terminal
+- **Smart PATH Detection**: Finds CLI even when not in PowerShell PATH
 - **On-Demand Analysis**: Run when you need it
 
 **Install from VS Code Marketplace:**
 Search for "Dotnet Unused" in Extensions or visit the [marketplace page](https://marketplace.visualstudio.com/items?itemName=kokkerametla.dotnet-unused-vscode).
+
+**New in v1.1.0:**
+- Command: "Fix Unused Using Directives" - Auto-remove unused usings
+- Command: "Install/Update CLI Tool" - Easy CLI management
+- Automatic CLI detection with installation prompt
 
 ## Installation
 
 ### Option 1: Install as .NET Global Tool (Recommended)
 
 ```bash
-dotnet tool install --global DotnetUnused
+dotnet tool install --global dotnetunused
 ```
 
 After installation, the `dotnet-unused` command will be available globally.
 
 Update to the latest version:
 ```bash
-dotnet tool update --global DotnetUnused
+dotnet tool update --global dotnetunused
 ```
+
+**Note**: The package ID is `dotnetunused` (lowercase), but the command is `dotnet-unused` (with hyphen).
 
 ### Option 2: Download Standalone Binary
 

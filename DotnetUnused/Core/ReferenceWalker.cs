@@ -163,6 +163,24 @@ public sealed class ReferenceWalker
                 symbol = methodSymbol.OriginalDefinition;
             }
 
+            // Unwrap methods/properties/fields of constructed generic types
+            // e.g., List<int>.Add should map to List<T>.Add
+            if (symbol.ContainingType is INamedTypeSymbol containingType &&
+                containingType.IsGenericType &&
+                !containingType.IsDefinition)
+            {
+                var originalType = containingType.OriginalDefinition;
+
+                // Find the corresponding member in the original definition
+                var originalMember = originalType.GetMembers(symbol.Name)
+                    .FirstOrDefault(m => m.Kind == symbol.Kind);
+
+                if (originalMember != null)
+                {
+                    symbol = originalMember;
+                }
+            }
+
             // Only track methods, properties, and fields
             if (symbol.Kind == SymbolKind.Method ||
                 symbol.Kind == SymbolKind.Property ||

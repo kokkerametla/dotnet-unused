@@ -55,6 +55,11 @@
         "command": "dotnet-unused.fixUnusedUsings",
         "title": "Fix Unused Using Directives",
         "category": "Dotnet Unused"
+      },
+      {
+        "command": "dotnet-unused.installCli",
+        "title": "Install/Update CLI Tool",
+        "category": "Dotnet Unused"
       }
     ],
     "configuration": {
@@ -90,6 +95,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show analysis output in integrated terminal instead of output window (diagnostics and tree view are only available with output window mode)"
+        },
+        "dotnet-unused.cliCheckTimeout": {
+          "type": "number",
+          "default": 5000,
+          "description": "Timeout in milliseconds for CLI availability check (default: 5000)"
         }
       }
     },

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - TBD
+
+### Added
+- **CS8019 compiler diagnostic fallback** when IDE analyzers are not loaded
+- **Constructed generic type handling** in reference walker (e.g., `List<int>.Add` correctly maps to `List<T>.Add`)
+- **VS Code Extension: One-click CLI installation** with automated setup
+- **VS Code Extension: Fix Unused Usings command** via Command Palette
+- **VS Code Extension: Install/Update CLI Tool command** for easy maintenance
+- Configurable CLI check timeout (default: 5000ms)
+- Progress feedback before fixing: shows count of unused usings
+- Automatic PATH fallback to standard .dotnet tools installation location
+- Integration tests for UnusedUsingAnalyzer CS8019 fallback
+- Unit tests for constructed generic type handling
+
+### Changed
+- **VS Code Extension: Improved CLI detection** - finds CLI even when not in PowerShell PATH
+- **VS Code Extension: Better installation flow** - verifies file exists before reporting success
+- Regex performance optimization using `[GeneratedRegex]` attribute (10x faster)
+- Refactored VS Code extension: extracted `selectProjectOrSolution()` helper (reduced 70 lines duplication)
+
+### Fixed
+- **SECURITY: Command injection vulnerability** in VS Code extension (removed unsafe `shell: true`)
+- **CRITICAL: Atomic file writes** in UsingDirectiveFixer (prevents corruption on failure/cancellation)
+- **CRITICAL: Path filtering false positives** using precise NuGet/SDK folder checks
+- **BUG: Namespace extraction** now uses Roslyn syntax parsing (handles "using" in namespace names)
+- Flaky progress test replaced with deterministic return value test
+- VS Code extension handles missing CLI gracefully with installation prompt
+- Installation race condition: 500ms delay before verification
+- Package ID case-sensitivity: `dotnetunused` (lowercase)
+
+### Security
+- Removed `shell: true` from all VS Code extension spawn calls
+- Conditional shell usage: only for non-absolute paths
+- Prevents malicious config from executing arbitrary commands
+
 ## [1.0.0] - 2025-12-29
 
 ### Added

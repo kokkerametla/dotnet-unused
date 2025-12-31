@@ -9,9 +9,9 @@ namespace DotnetUnused.Tests.Core;
 public class UnusedUsingAnalyzerTests
 {
     [Fact]
-    public async Task AnalyzeAsync_ReturnsEmptyList_WhenNoAnalyzersAvailable()
+    public async Task AnalyzeAsync_UsesCS8019Fallback_WhenNoIDEAnalyzersAvailable()
     {
-        // Arrange - Create an in-memory project (won't have IDE analyzers)
+        // Arrange - Create an in-memory project (won't have IDE analyzers, but has compiler)
         var sourceCode = @"
 using System;
 using System.Linq;
@@ -34,9 +34,10 @@ namespace TestProject
         // Act
         var results = await analyzer.AnalyzeAsync(solution);
 
-        // Assert - AdhocWorkspace doesn't include analyzers, so we expect no results
+        // Assert - Now falls back to CS8019 compiler diagnostic, so it finds unused usings
         Assert.NotNull(results);
-        Assert.Empty(results);
+        // Should detect System.Linq as unused (CS8019)
+        Assert.Contains(results, r => r.Namespace.Contains("Linq"));
     }
 
     [Fact]

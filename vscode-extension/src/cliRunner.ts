@@ -12,9 +12,37 @@ export class CliRunner {
         this.outputChannel = outputChannel;
     }
 
-    async runAnalysis(options: AnalysisOptions): Promise<UnusedCodeReport | null> {
+    /**
+     * Gets the CLI path, checking standard installation location if not in PATH
+     */
+    public getCliPath(): string {
         const config = vscode.workspace.getConfiguration('dotnet-unused');
-        const cliPath = config.get<string>('cliPath') || 'dotnet-unused';
+        let cliPath = config.get<string>('cliPath') || 'dotnet-unused';
+
+        // If no custom path set, try to find CLI in standard .dotnet tools location
+        if (cliPath === 'dotnet-unused') {
+            const home = process.env.USERPROFILE || process.env.HOME;
+            if (home) {
+                const standardPath = path.join(home, '.dotnet', 'tools', 'dotnet-unused');
+                const windowsPath = standardPath + '.exe';
+
+                // Check if CLI exists at standard location
+                if (fs.existsSync(windowsPath)) {
+                    this.outputChannel.appendLine(`[Debug] Using CLI at: ${windowsPath}`);
+                    return windowsPath;
+                } else if (fs.existsSync(standardPath)) {
+                    this.outputChannel.appendLine(`[Debug] Using CLI at: ${standardPath}`);
+                    return standardPath;
+                }
+            }
+        }
+
+        return cliPath;
+    }
+
+    async runAnalysis(options: AnalysisOptions): Promise<UnusedCodeReport | null> {
+        const cliPath = this.getCliPath();
+        const config = vscode.workspace.getConfiguration('dotnet-unused');
         const excludePublic = config.get<boolean>('excludePublic', true);
 
         const tempFile = path.join(os.tmpdir(), `dotnet-unused-${Date.now()}.json`);
@@ -94,13 +122,53 @@ export class CliRunner {
     }
 
     async checkCliAvailable(): Promise<boolean> {
-        const config = vscode.workspace.getConfiguration('dotnet-unused');
-        const cliPath = config.get<string>('cliPath') || 'dotnet-unused';
+        const cliPath = this.getCliPath();
 
         return new Promise((resolve) => {
-            child_process.exec(`${cliPath} --help`, (error) => {
-                resolve(!error);
+            // Use spawn without shell for security (prevents command injection)
+            // Only use shell if cliPath is not an absolute path (for 'dotnet-unused' command)
+            const useShell = !path.isAbsolute(cliPath);
+            const childProc = child_process.spawn(cliPath, ['--help'], {
+                shell: useShell,
+                env: { ...process.env }
             });
+
+            let hasStdout = false;
+            let completed = false;
+
+            childProc.stdout.on('data', () => {
+                hasStdout = true; // CLI is working if it outputs to stdout
+            });
+
+            childProc.on('close', (code: number | null) => {
+                if (completed) return;
+                completed = true;
+
+                // CLI is available only if it outputted to stdout (not just stderr)
+                // and exited with code 0 or 1 (help usually exits with 1)
+                const isAvailable = hasStdout && (code === 0 || code === 1);
+                this.outputChannel.appendLine(`[Debug] CLI check: path="${cliPath}", code=${code}, hasStdout=${hasStdout}, available=${isAvailable}`);
+                resolve(isAvailable);
+            });
+
+            childProc.on('error', (error: Error) => {
+                if (completed) return;
+                completed = true;
+                this.outputChannel.appendLine(`[Debug] CLI check failed: ${error.message}`);
+                resolve(false);
+            });
+
+            // Configurable timeout (default 5 seconds)
+            const config = vscode.workspace.getConfiguration('dotnet-unused');
+            const timeout = config.get<number>('cliCheckTimeout', 5000);
+
+            setTimeout(() => {
+                if (completed) return;
+                completed = true;
+                this.outputChannel.appendLine(`[Debug] CLI check timed out after ${timeout}ms`);
+                childProc.kill();
+                resolve(false);
+            }, timeout);
         });
     }
 }

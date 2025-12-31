@@ -40,31 +40,38 @@ public sealed class UnusedUsingAnalyzer
 
             try
             {
-                // Get IDE analyzers (includes IDE0005)
-                var analyzerReferences = project.AnalyzerReferences;
-                if (!analyzerReferences.Any())
-                {
-                    return;
-                }
+                IEnumerable<Diagnostic> unusedUsingDiagnostics;
 
+                // Try to use IDE analyzers (IDE0005) if available
+                var analyzerReferences = project.AnalyzerReferences;
                 var analyzers = analyzerReferences
                     .SelectMany(r => r.GetAnalyzers(project.Language))
                     .Where(a => a != null)
                     .ToImmutableArray();
 
-                if (analyzers.IsEmpty)
+                if (!analyzers.IsEmpty)
                 {
-                    return;
+                    // Use IDE analyzers (preferred - more accurate)
+                    var compilationWithAnalyzers = compilation.WithAnalyzers(analyzers, options: null);
+                    var allDiagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(ct);
+
+                    unusedUsingDiagnostics = allDiagnostics.Where(d =>
+                        (d.Id == "CS8019" || d.Id == "IDE0005") &&
+                        d.Location.IsInSource &&
+                        d.Location.SourceTree != null);
                 }
+                else
+                {
+                    // Fallback: Use compiler diagnostics (CS8019) if IDE analyzers not available
+                    progress?.Report($"IDE analyzers not found for {project.Name}, using compiler diagnostics (CS8019)");
 
-                var compilationWithAnalyzers = compilation.WithAnalyzers(analyzers, options: null);
-                var diagnostics = await compilationWithAnalyzers.GetAllDiagnosticsAsync(ct);
+                    var compilerDiagnostics = compilation.GetDiagnostics(ct);
 
-                // Filter for CS8019 (unused usings - compiler diagnostic) or IDE0005 (IDE analyzer)
-                var unusedUsingDiagnostics = diagnostics.Where(d =>
-                    (d.Id == "CS8019" || d.Id == "IDE0005") &&
-                    d.Location.IsInSource &&
-                    d.Location.SourceTree != null);
+                    unusedUsingDiagnostics = compilerDiagnostics.Where(d =>
+                        d.Id == "CS8019" &&
+                        d.Location.IsInSource &&
+                        d.Location.SourceTree != null);
+                }
 
                 foreach (var diagnostic in unusedUsingDiagnostics)
                 {
