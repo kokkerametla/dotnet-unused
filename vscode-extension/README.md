@@ -4,9 +4,9 @@ Detect and highlight unused code in .NET solutions directly in Visual Studio Cod
 
 ## Features
 
-- **✨ One-Click CLI Installation** (New in v1.1.0): Automatically installs CLI tool if missing
-- **🔧 Auto-Fix Unused Usings** (New in v1.1.0): Remove all unused using directives with one command
-- **🎯 Smart PATH Detection** (New in v1.1.0): Finds CLI even when not in PowerShell PATH
+- **✨ One-Click CLI Installation** (New in v1.2.0): Automatically installs CLI tool if missing
+- **🔧 Auto-Fix Unused Usings** (New in v1.2.0): Remove all unused using directives with one command
+- **🎯 Smart PATH Detection** (New in v1.2.0): Finds CLI even when not in PowerShell PATH
 - **On-Demand Analysis**: Analyze your entire workspace or just the current file
 - **Inline Diagnostics**: See unused code warnings directly in your editor with squiggly underlines
 - **Unused Usings Detection**: Find unnecessary using directives (enabled by default in v1.0.0+)
@@ -38,8 +38,8 @@ Access commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
 - **Dotnet Unused: Analyze Workspace for Unused Code** - Analyze entire solution/project
 - **Dotnet Unused: Analyze Current File for Unused Code** - Analyze only the current C# file's project
-- **Dotnet Unused: Fix Unused Using Directives** ✨ (New in v1.1.0) - Auto-remove unused usings
-- **Dotnet Unused: Install/Update CLI Tool** ✨ (New in v1.1.0) - Install or update the CLI
+- **Dotnet Unused: Fix Unused Using Directives** ✨ (New in v1.2.0) - Auto-remove unused usings
+- **Dotnet Unused: Install/Update CLI Tool** ✨ (New in v1.2.0) - Install or update the CLI
 - **Dotnet Unused: Clear Unused Code Diagnostics** - Clear all diagnostics from the editor
 - **Dotnet Unused: Export Unused Code Report (JSON)** - Export analysis results (coming soon)
 
@@ -63,7 +63,7 @@ Configure the extension in VS Code settings:
 - `dotnet-unused.diagnosticSeverity`: Severity level for diagnostics (`Error`, `Warning`, `Information`, `Hint`)
 - `dotnet-unused.useTerminal`: Show output in integrated terminal instead of output window (default: `true`)
 - `dotnet-unused.autoRunOnSave`: Automatically analyze when C# files are saved (default: `false`)
-- `dotnet-unused.cliCheckTimeout`: Timeout in milliseconds for CLI check (default: `5000`) ✨ New in v1.1.0
+- `dotnet-unused.cliCheckTimeout`: Timeout in milliseconds for CLI check (default: `5000`) ✨ New in v1.2.0
 
 ## How It Works
 
@@ -94,7 +94,7 @@ The extension integrates with the `dotnet-unused` CLI tool:
 
 ### "dotnet-unused CLI tool not found"
 
-**✨ Automatic Installation (v1.1.0+):**
+**✨ Automatic Installation (v1.2.0+):**
 The extension will offer to install the CLI automatically. Just click "Install Automatically" when prompted!
 
 **Manual Installation:**

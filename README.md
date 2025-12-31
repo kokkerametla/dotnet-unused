@@ -37,7 +37,7 @@ A [Visual Studio Code extension](./vscode-extension) is available for detecting 
 **Install from VS Code Marketplace:**
 Search for "Dotnet Unused" in Extensions or visit the [marketplace page](https://marketplace.visualstudio.com/items?itemName=kokkerametla.dotnet-unused-vscode).
 
-**New in v1.1.0:**
+**New in v1.2.0:**
 - Command: "Fix Unused Using Directives" - Auto-remove unused usings
 - Command: "Install/Update CLI Tool" - Easy CLI management
 - Automatic CLI detection with installation prompt
